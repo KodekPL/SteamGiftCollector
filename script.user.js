@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Steamgifts Collector
-// @description Collects unlisted gifts form SteamGifts.com
+// @description Collects unlisted gifts from SteamGifts.com
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
