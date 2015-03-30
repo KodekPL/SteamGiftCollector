@@ -161,7 +161,7 @@ function findUrls(text) {
 
     var regexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
 
-    while( (matchArray = regexToken.exec(source)) !== null ) {
+    while((matchArray = regexToken.exec(source)) !== null) {
         var token = matchArray[0];
 
         urlArray.push(token);
