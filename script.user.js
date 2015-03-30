@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.5
+// @version     1.0.6
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -122,7 +122,7 @@ function onValidGiftScanComplete() {
         }
     }
 
-    linksWindow.document.write("<h1>Invalid gifts(" + invalidGiftUrls.length + "):</h1><br>");
+    linksWindow.document.write("<h1>Invalid gifts (" + invalidGiftUrls.length + "):</h1><br>");
 
     for (var i = 0; i < invalidGiftUrls.length; i++) {
         linksWindow.document.write("<a href='" + invalidGiftUrls[i] + "'>" + invalidGiftUrls[i] + "</a><br>");
