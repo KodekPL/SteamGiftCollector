@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.4
+// @version     1.0.5
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -89,7 +89,7 @@ function asyncScanForValidGifts() {
             success : function (source) {
                 if (isValidGift(source)) {
                     validGiftUrls.push(this.url);
-                    } else {
+                } else {
                     invalidGiftUrls.push(this.url);
                 }
             },
@@ -112,7 +112,7 @@ function onValidGiftScanComplete() {
     var linksWindow = window.open();
 
     linksWindow.document.write("<title>Collected Gifts - " + orgTitle + "</title>");
-    linksWindow.document.write("<h1>Valid gifts:</h1><br>");
+    linksWindow.document.write("<h1>Valid gifts (" + validGiftUrls.length + "):</h1><br>");
 
     for (var i = 0; i < validGiftUrls.length; i++) {
         linksWindow.document.write("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
@@ -122,7 +122,7 @@ function onValidGiftScanComplete() {
         }
     }
 
-    linksWindow.document.write("<h1>Invalid gifts:</h1><br>");
+    linksWindow.document.write("<h1>Invalid gifts(" + invalidGiftUrls.length + "):</h1><br>");
 
     for (var i = 0; i < invalidGiftUrls.length; i++) {
         linksWindow.document.write("<a href='" + invalidGiftUrls[i] + "'>" + invalidGiftUrls[i] + "</a><br>");
@@ -132,6 +132,11 @@ function onValidGiftScanComplete() {
 function isValidGift(source) {
     // Contributor Level Required check
     if (source.indexOf('featured__column--contributor-level--negative') >= 0) {
+        return false;
+    }
+    
+    // Exists in Account check (TODO: change this)
+    if (source.indexOf('Exists in Account') >= 0) {
         return false;
     }
 
