@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name        Steamgifts Collecter
-// @description Collect invite only gifts form Steamgifts.com
+// @name        Steamgifts Collector
+// @description Collects hidden gifts form SteamGifts.com
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0
+// @version     1.0.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -23,13 +23,11 @@ var validGiftUrls = [];
 var invalidGiftUrls = [];
 
 $(document).ready(function() {
-
     orgTitle = document.title;
     document.title = orgTitle + " (collecting)";
 
     scanForTopics();
     asyncScanForGifts();
-
 });
 
 function scanForTopics() {
@@ -91,7 +89,7 @@ function scanForValidGifts() {
             success : function (source) {
                 if (isValidGift(source)) {
                     validGiftUrls.push(this.url);
-                    } else {
+                } else {
                     invalidGiftUrls.push(this.url);
                 }
             },
@@ -128,7 +126,6 @@ function onValidGiftScanComplete() {
 }
 
 function isValidGift(source) {
-
     // Already Entered check
     if (source.indexOf('sidebar__entry-insert is-hidden') >= 0) {
         return false;
@@ -142,11 +139,11 @@ function isValidGift(source) {
     return true;
 }
 
-function containsString(a, text) {
-    var i = a.length;
+function containsString(array, text) {
+    var i = array.length;
 
     while (i--) {
-        if (a[i].toUpperCase() === text.toUpperCase()) {
+        if (array[i].toUpperCase() === text.toUpperCase()) {
             return true;
         }
     }
