@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name        Steamgifts Collector
-// @description Collects hidden gifts form SteamGifts.com
+// @description Collects unlisted gifts form SteamGifts.com
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.1
+// @version     1.0.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
