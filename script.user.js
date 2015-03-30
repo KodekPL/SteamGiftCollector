@@ -4,12 +4,14 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.6
+// @version     1.0.7
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
 // @grant       none
 // ==/UserScript==
+
+var urlRegexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
 
 var orgTitle = "";
 
@@ -34,12 +36,10 @@ function scanForTopics() {
     console.log("Scanning for topics...");
 
     for (var i = 0; i < document.links.length; i++) {
-        if (document.links[i].hostname === location.hostname) {
-            var url = document.links[i].href;
+        var url = document.links[i].href;
 
-            if (url.indexOf('/discussion/') >= 0 && !containsString(forumUrls, url)) {
-                forumUrls.push(url);
-            }
+        if (url.indexOf('/discussion/') >= 0 && !containsString(forumUrls, url)) {
+            forumUrls.push(url);
         }
     }
 
@@ -134,7 +134,7 @@ function isValidGift(source) {
     if (source.indexOf('featured__column--contributor-level--negative') >= 0) {
         return false;
     }
-    
+
     // Exists in Account check (TODO: change this)
     if (source.indexOf('Exists in Account') >= 0) {
         return false;
@@ -159,9 +159,7 @@ function isValidGift(source) {
 }
 
 function containsString(array, text) {
-    var i = array.length;
-
-    while (i--) {
+    for (var i = 0; i < array.length; i++) {
         if (array[i].toUpperCase() === text.toUpperCase()) {
             return true;
         }
@@ -170,17 +168,12 @@ function containsString(array, text) {
     return false;
 }
 
-function findUrls(text) {
-    var source = (text || '').toString();
+function findUrls(source) {
     var urlArray = [];
     var matchArray;
 
-    var regexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
-
-    while((matchArray = regexToken.exec(source)) !== null) {
-        var token = matchArray[0];
-
-        urlArray.push(token);
+    while((matchArray = urlRegexToken.exec(source)) !== null) {
+        urlArray.push(matchArray[0]);
     }
 
     return urlArray;
