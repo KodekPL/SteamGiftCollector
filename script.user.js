@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.2
+// @version     1.0.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -77,10 +77,10 @@ function asyncScanForGifts() {
 function onGiftScanComplete() {
     console.log("Scanned " + giftUrls.length + " gifts...");
 
-    scanForValidGifts();
+    asyncScanForValidGifts();
 }
 
-function scanForValidGifts() {
+function asyncScanForValidGifts() {
     console.log("Validating gifts...");
 
     for (var i = 0; i < giftUrls.length; i++) {
