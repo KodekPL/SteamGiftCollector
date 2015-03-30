@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name        Steamgifts Collecter
-// @description	Collect invite only gifts form Steamgifts.com
-// @author		Kodek
-// @namespace	csg
-// @include		*steamgifts.com/discussions*
-// @version		1.0
-// @downloadURL	https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
-// @updateURL	https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
-// @run-at		document-end
-// @grant		none
+// @description Collect invite only gifts form Steamgifts.com
+// @author      Kodek
+// @namespace   csg
+// @include     *steamgifts.com/discussions*
+// @version     1.0
+// @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
+// @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
+// @run-at      document-end
+// @grant       none
 // ==/UserScript==
 
 var orgTitle = "";
