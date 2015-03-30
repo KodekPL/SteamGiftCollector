@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.3
+// @version     1.0.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -77,10 +77,10 @@ function asyncScanForGifts() {
 function onGiftScanComplete() {
     console.log("Scanned " + giftUrls.length + " gifts...");
 
-    scanForValidGifts();
+    asyncScanForValidGifts();
 }
 
-function scanForValidGifts() {
+function asyncScanForValidGifts() {
     console.log("Validating gifts...");
 
     for (var i = 0; i < giftUrls.length; i++) {
@@ -89,7 +89,7 @@ function scanForValidGifts() {
             success : function (source) {
                 if (isValidGift(source)) {
                     validGiftUrls.push(this.url);
-                } else {
+                    } else {
                     invalidGiftUrls.push(this.url);
                 }
             },
@@ -116,7 +116,7 @@ function onValidGiftScanComplete() {
 
     for (var i = 0; i < validGiftUrls.length; i++) {
         linksWindow.document.write("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
-        
+
         if (i % 2 == 1) {
             linksWindow.document.write("<br>");
         }
@@ -130,6 +130,16 @@ function onValidGiftScanComplete() {
 }
 
 function isValidGift(source) {
+    // Contributor Level Required check
+    if (source.indexOf('featured__column--contributor-level--negative') >= 0) {
+        return false;
+    }
+
+    // Not Enough Points check (as valid gift)
+    if (source.indexOf('sidebar__error') >= 0) {
+        return true;
+    }
+
     // Already Entered check
     if (source.indexOf('sidebar__entry-insert is-hidden') >= 0) {
         return false;
