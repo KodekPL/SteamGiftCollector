@@ -77,10 +77,10 @@ function asyncScanForGifts() {
 function onGiftScanComplete() {
     console.log("Scanned " + giftUrls.length + " gifts...");
 
-    asyncScanForValidGifts();
+    scanForValidGifts();
 }
 
-function asyncScanForValidGifts() {
+function scanForValidGifts() {
     console.log("Validating gifts...");
 
     for (var i = 0; i < giftUrls.length; i++) {
@@ -115,7 +115,11 @@ function onValidGiftScanComplete() {
     linksWindow.document.write("<h1>Valid gifts:</h1><br>");
 
     for (var i = 0; i < validGiftUrls.length; i++) {
-        linksWindow.document.write("<a href='" + validGiftUrls[i] + "'>" + validGiftUrls[i] + "</a><br>");
+        linksWindow.document.write("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
+        
+        if (i % 2 == 1) {
+            linksWindow.document.write("<br>");
+        }
     }
 
     linksWindow.document.write("<h1>Invalid gifts:</h1><br>");
