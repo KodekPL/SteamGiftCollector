@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.0.7
+// @version     1.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -12,6 +12,8 @@
 // ==/UserScript==
 
 var urlRegexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
+
+var isRunning = false;
 
 var orgTitle = "";
 
@@ -24,13 +26,66 @@ var checkedGiftUrls = 0;
 var validGiftUrls = [];
 var invalidGiftUrls = [];
 
+var buttonStatus;
+
+var maxStatus = 3;
+var setStatus = -1;
+
 $(document).ready(function() {
+    var sidebar = document.getElementsByClassName('sidebar')[0];
+
+    var initButton = document.createElement('div');
+
+    var buttonStatus = document.createElement('div');
+    buttonStatus.setAttribute('id', 'collector-status');
+    buttonStatus.innerHTML = 'Collect Gifts';
+
+    initButton.innerHTML = '<div id="collector-button" class="sidebar__action-button">' + buttonStatus.outerHTML + '</div>';
+
+    sidebar.appendChild(initButton);
+
+    initButton.onclick = function() {
+        initScan();
+    };
+});
+
+function setButtonStatus(text) {
+    var status = document.getElementById('collector-status');
+
+    status.innerHTML = text;
+}
+
+function disableButton() {
+    var button = document.getElementById('collector-button');
+
+    button.className = 'sidebar__action-button is-disabled';
+}
+
+function updateButtonStatus() {
+    setStatus++;
+
+    setButtonStatus('Collecting... (' + setStatus + '/' + maxStatus + ')');
+}
+
+function initScan() {
+    if (isRunning) {
+        return;
+    }
+
+    isRunning = true;
+
+    disableButton();
+    updateButtonStatus();
+
     orgTitle = document.title;
     document.title = orgTitle + " (collecting)";
 
     scanForTopics();
+
+    updateButtonStatus();
+
     asyncScanForGifts();
-});
+}
 
 function scanForTopics() {
     console.log("Scanning for topics...");
@@ -77,6 +132,8 @@ function asyncScanForGifts() {
 function onGiftScanComplete() {
     console.log("Scanned " + giftUrls.length + " gifts...");
 
+    updateButtonStatus();
+
     asyncScanForValidGifts();
 }
 
@@ -107,25 +164,25 @@ function asyncScanForValidGifts() {
 function onValidGiftScanComplete() {
     console.log("Validated " + validGiftUrls.length + " gifts...");
 
+    updateButtonStatus();
+
     document.title = orgTitle + " (done)";
 
-    var linksWindow = window.open();
-
-    linksWindow.document.write("<title>Collected Gifts - " + orgTitle + "</title>");
-    linksWindow.document.write("<h1>Valid gifts (" + validGiftUrls.length + "):</h1><br>");
+    document.write("<title>Collected Gifts - " + orgTitle + "</title>");
+    document.write("<h1>Valid gifts (" + validGiftUrls.length + "):</h1><br>");
 
     for (var i = 0; i < validGiftUrls.length; i++) {
-        linksWindow.document.write("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
+        document.write("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
 
         if (i % 2 == 1) {
-            linksWindow.document.write("<br>");
+            document.write("<br>");
         }
     }
 
-    linksWindow.document.write("<h1>Invalid gifts (" + invalidGiftUrls.length + "):</h1><br>");
+    document.write("<h1>Invalid gifts (" + invalidGiftUrls.length + "):</h1><br>");
 
     for (var i = 0; i < invalidGiftUrls.length; i++) {
-        linksWindow.document.write("<a href='" + invalidGiftUrls[i] + "'>" + invalidGiftUrls[i] + "</a><br>");
+        document.write("<a href='" + invalidGiftUrls[i] + "'>" + invalidGiftUrls[i] + "</a><br>");
     }
 }
 
