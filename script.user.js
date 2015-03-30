@@ -22,7 +22,7 @@ var invalidGiftUrls = [];
 
 $(document).ready(function() {
     
-    document.title = document.title + " (collecting...)";
+    document.title = "Collecting gifts...";
     
     scanForTopics();
     asyncScanForGifts();
@@ -106,7 +106,7 @@ function scanForValidGifts() {
 function onValidGiftScanComplete() {
     console.log("Validated " + validGiftUrls.length + " gifts...");
     
-    document.title = document.title + " (done)";
+    document.title = "Finished collecting gifts...";
     
     var linksWindow = window.open();
     
