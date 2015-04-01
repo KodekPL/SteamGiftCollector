@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.1
+// @version     1.1.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -194,6 +194,11 @@ function isValidGift(source) {
 
     // Exists in Account check (TODO: change this)
     if (source.indexOf('Exists in Account') >= 0) {
+        return false;
+    }
+    
+    // Missing Base Game check (TODO: change this)
+    if (source.indexOf('Missing Base Game') >= 0) {
         return false;
     }
 
