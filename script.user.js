@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.1.1
+// @version     1.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -23,8 +23,9 @@ var checkedForumUrls = 0;
 var giftUrls = [];
 var checkedGiftUrls = 0;
 
-var validGiftUrls = [];
-var invalidGiftUrls = [];
+var validGiftUrls = []; // Array
+var invalidGiftUrls = {}; // Map (String <-> Array)
+var invalidGiftCount = 0;
 
 var buttonStatus;
 
@@ -144,10 +145,24 @@ function asyncScanForValidGifts() {
         $.ajax({
             url : giftUrls[i],
             success : function (source) {
-                if (isValidGift(source)) {
+                var validResult = isValidGift(source);
+
+                if (validResult == null) {
+                    // Add to valid gifts
                     validGiftUrls.push(this.url);
                 } else {
-                    invalidGiftUrls.push(this.url);
+                    // Add to invalid gifts with result
+
+                    var invalidArray = [];
+
+                    if (invalidGiftUrls[validResult] != null) {
+                        invalidArray = invalidGiftUrls[validResult];
+                    }
+
+                    invalidArray.push(this.url);
+                    invalidGiftUrls[validResult] = invalidArray;
+
+                    invalidGiftCount++;
                 }
             },
             complete: function() {
@@ -164,60 +179,103 @@ function asyncScanForValidGifts() {
 function onValidGiftScanComplete() {
     console.log("Validated " + validGiftUrls.length + " gifts...");
 
-    updateButtonStatus();
-
     document.title = orgTitle + " (done)";
 
-    document.write("<title>Collected Gifts - " + orgTitle + "</title>");
-    document.write("<h1>Valid gifts (" + validGiftUrls.length + "):</h1><br>");
+    document.getElementsByClassName('page__inner-wrap')[0].remove();
+    // document.getElementsByClassName('footer__outer-wrap')[0].remove();
+
+    var contentDiv = document.getElementsByClassName('page__outer-wrap')[0];
+    var content = "";
+
+    content += ("<title>Collected Gifts - " + orgTitle + "</title>");
+
+    // Heading - Valid Gifts
+    content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Valid Gifts (" + validGiftUrls.length + ")</div></div>");
 
     for (var i = 0; i < validGiftUrls.length; i++) {
-        document.write("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
+        content += ("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
+    }
 
-        if (i % 2 == 1) {
-            document.write("<br>");
+    // Heading - Invalid Gifts
+    content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Invalid Gifts (" + invalidGiftCount + ")</div></div><br>");
+
+    for (var key in invalidGiftUrls) {
+        if (invalidGiftUrls.hasOwnProperty(key)) {
+            var invalidArray = invalidGiftUrls[key];
+
+            for (var i = 0; i < invalidArray.length; i++) {
+                content += ("<a class='giveaway__username' href='" + invalidArray[i] + "'>" + invalidArray[i] + "</a> (" + key + ")<br>");
+            }
         }
     }
 
-    document.write("<h1>Invalid gifts (" + invalidGiftUrls.length + "):</h1><br>");
-
-    for (var i = 0; i < invalidGiftUrls.length; i++) {
-        document.write("<a href='" + invalidGiftUrls[i] + "'>" + invalidGiftUrls[i] + "</a><br>");
-    }
+    contentDiv.innerHTML = content;
 }
 
 function isValidGift(source) {
+    var endPoint = source.indexOf('Description');
+
     // Contributor Level Required check
-    if (source.indexOf('featured__column--contributor-level--negative') >= 0) {
-        return false;
+    if (hasStringBefore(source, 'featured__column--contributor-level--negative', endPoint)) {
+        return "Too Low Level";
     }
 
-    // Exists in Account check (TODO: change this)
-    if (source.indexOf('Exists in Account') >= 0) {
-        return false;
-    }
-    
-    // Missing Base Game check (TODO: change this)
-    if (source.indexOf('Missing Base Game') >= 0) {
-        return false;
-    }
+    // Error Entry Button check
+    if (hasStringBefore(source, 'sidebar__error', endPoint)) {
+        // Exists in Account check
+        if (hasStringBefore(source, 'Exists in Account', endPoint)) {
+            return "Exists in Account";
+        }
 
-    // Not Enough Points check (as valid gift)
-    if (source.indexOf('sidebar__error') >= 0) {
-        return true;
+        // Missing Base Game check
+        if (hasStringBefore(source, 'Missing Base Game', endPoint)) {
+            return "Missing Base Game";
+        }
+
+        // Not Enough Points check (VALID GIFT)
+        return null;
     }
 
     // Already Entered check
-    if (source.indexOf('sidebar__entry-insert is-hidden') >= 0) {
-        return false;
+    if (hasStringBefore(source, 'sidebar__entry-insert is-hidden', endPoint)) {
+        return "Already Entered";
+    }
+
+    // Whitelist check
+    if (hasStringBefore(source, 'featured__column--whitelist', endPoint)) {
+        return "Whitelist";
+    }
+
+    // Ended check
+    if (hasStringBefore(source, 'Ended', endPoint)) {
+        return "Ended";
+    }
+
+    // No Permission
+    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint)) {
+        return "No Permission";
     }
 
     // No Entry check
-    if (source.indexOf('entry_insert') == -1) {
-        return false;
+    if (!hasStringBefore(source, 'entry_insert', -1)) {
+        return "Other";
     }
 
-    return true;
+    return null;
+}
+
+function hasStringBefore(source, text, endPoint) {
+    var index = source.indexOf(text);
+
+    if (index >= 0) {
+        if (endPoint == -1) {
+            return true;
+        } else {
+            return index < endPoint;
+        }
+    }
+
+    return false;
 }
 
 function containsString(array, text) {
