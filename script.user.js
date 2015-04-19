@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.2.1
+// @version     1.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -196,16 +196,18 @@ function onValidGiftScanComplete() {
         content += ("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
     }
 
-    // Heading - Invalid Gifts
-    content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Invalid Gifts (" + invalidGiftCount + ")</div></div><br>");
-
+    // Invalid Gifts
     for (var key in invalidGiftUrls) {
         if (invalidGiftUrls.hasOwnProperty(key)) {
             var invalidArray = invalidGiftUrls[key];
 
+            content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Invalid gifts - " + key + " (" + invalidArray.length + ")</div></div><br>");
+
             for (var i = 0; i < invalidArray.length; i++) {
-                content += ("<a class='giveaway__username' href='" + invalidArray[i] + "'>" + invalidArray[i] + "</a> (" + key + ")<br>");
+                content += ("<a class='giveaway__username' href='" + invalidArray[i] + "'>" + invalidArray[i] + "</a><br>");
             }
+
+            content += "<br>";
         }
     }
 
@@ -246,6 +248,11 @@ function isValidGift(source) {
         return "Whitelist";
     }
 
+    // Begins check
+    if (hasStringBefore(source, 'Begins', endPoint)) {
+        return "Not yet started";
+    }
+
     // Ended check
     if (hasStringBefore(source, 'Ended', endPoint)) {
         return "Ended";
@@ -259,6 +266,11 @@ function isValidGift(source) {
     // No Permission
     if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint)) {
         return "No Permission";
+    }
+
+    // Deleted
+    if (hasStringBefore(source, 'Deleted', endPoint)) {
+        return "Deleted";
     }
 
     // No Entry check
