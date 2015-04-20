@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.3
+// @version     1.3.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -259,7 +259,7 @@ function isValidGift(source) {
     }
 
     // Restricted Region
-    if (hasStringBefore(source, 'This giveaway is restricted to the following regions', endPoint)) {
+    if (hasStringBefore(source, 'This giveaway is restricted to the following region', endPoint)) {
         return "Restricted Regions";
     }
 
