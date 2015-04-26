@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.3.1
+// @version     1.3.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -115,7 +115,8 @@ function asyncScanForGifts() {
                     var url = urls[i];
 
                     if (url.indexOf('/giveaway/') >= 0 && !containsString(giftUrls, url)) {
-                        giftUrls.push(url);
+                        // Remove anything past gift id in the url
+                        giftUrls.push(url.split('/', 6).join('/'));
                     }
                 }
             },
