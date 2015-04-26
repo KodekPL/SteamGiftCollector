@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.3.2
+// @version     1.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -12,12 +12,14 @@
 // ==/UserScript==
 
 var urlRegexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
+var scanPagesCount = 5;
 
 var isRunning = false;
 
 var orgTitle = "";
 
 var forumUrls = [];
+var checkedPageUrls = 0;
 var checkedForumUrls = 0;
 
 var giftUrls = [];
@@ -39,7 +41,7 @@ $(document).ready(function() {
 
     var buttonStatus = document.createElement('div');
     buttonStatus.setAttribute('id', 'collector-status');
-    buttonStatus.innerHTML = 'Collect Gifts';
+    buttonStatus.innerHTML = 'Collect All Gifts';
 
     initButton.innerHTML = '<div id="collector-button" class="sidebar__action-button">' + buttonStatus.outerHTML + '</div>';
 
@@ -79,30 +81,44 @@ function initScan() {
     updateButtonStatus();
 
     orgTitle = document.title;
-    document.title = orgTitle + " (collecting)";
+    document.title = orgTitle + " (collecting...)";
 
-    scanForTopics();
-
-    updateButtonStatus();
-
-    asyncScanForGifts();
+    asyncScanPagesForTopics();
 }
 
-function scanForTopics() {
-    console.log("Scanning for topics...");
+function asyncScanPagesForTopics() {
+    console.log("Scanning pages for topics...");
 
-    for (var i = 0; i < document.links.length; i++) {
-        var url = document.links[i].href;
+    for (var i = 1; i <= scanPagesCount; i++) {
+        $.ajax({
+            url : "http://www.steamgifts.com/discussions/search?page=" + i,
+            success : function (source) {
+                // TODO: Collect topic urls better
+                var fixedSource = source.replace(/href="/g, "http://www.steamgifts.com/");
+                var urls = findUrls(fixedSource);
 
-        if (url.indexOf('/discussion/') >= 0 && !containsString(forumUrls, url)) {
-            forumUrls.push(url);
-        }
+                for (var i = 0; i < urls.length; i++) {
+                    var url = urls[i];
+
+                    if (url.indexOf('/discussion/') >= 0 && !containsString(forumUrls, url)) {
+                        forumUrls.push(url);
+                    }
+                }
+
+                checkedPageUrls++;
+
+                if (checkedPageUrls >= scanPagesCount) {
+                    asyncScanForGifts();
+                }
+            }
+        });
     }
-
-    console.log("Scanned " + forumUrls.length + " topics...");
 }
 
 function asyncScanForGifts() {
+    updateButtonStatus();
+
+    console.log("Scanned " + scanPagesCount + " pages and found " + forumUrls.length + " topics...");
     console.log("Scanning for gifts...");
 
     for (var i = 0; i < forumUrls.length; i++) {
@@ -114,7 +130,7 @@ function asyncScanForGifts() {
                 for (var i = 0; i < urls.length; i++) {
                     var url = urls[i];
 
-                    if (url.indexOf('/giveaway/') >= 0 && !containsString(giftUrls, url)) {
+                    if (url.indexOf('/giveaway/') >= 0 && url.indexOf('steamgifts.com') >= 0 && !containsString(giftUrls, url)) {
                         // Remove anything past gift id in the url
                         giftUrls.push(url.split('/', 6).join('/'));
                     }
@@ -165,6 +181,20 @@ function asyncScanForValidGifts() {
 
                     invalidGiftCount++;
                 }
+            },
+            error: function() {
+                // Add to invalid gifts as error
+
+                var invalidArray = [];
+
+                if (invalidGiftUrls['Errors'] != null) {
+                    invalidArray = invalidGiftUrls['Errors'];
+                }
+
+                invalidArray.push(this.url);
+                invalidGiftUrls['Errors'] = invalidArray;
+
+                invalidGiftCount++;
             },
             complete: function() {
                 checkedGiftUrls++;
