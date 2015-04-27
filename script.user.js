@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.4.1
+// @version     1.4.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -144,8 +144,7 @@ function asyncScanForGifts() {
                         updateButtonStatus();
                     }
                 }
-            },
-            complete: function() {
+
                 checkedForumUrls++;
 
                 if (checkedForumUrls >= forumUrls.length) {
@@ -196,6 +195,12 @@ function asyncScanForValidGifts() {
 
                     updateButtonStatus();
                 }
+
+                checkedGiftUrls++;
+
+                if (checkedGiftUrls >= giftUrls.length) {
+                    onValidGiftScanComplete();
+                }
             },
             error: function() {
                 // Add to invalid gifts as error
@@ -212,8 +217,7 @@ function asyncScanForValidGifts() {
                 invalidGiftCount++;
 
                 updateButtonStatus();
-            },
-            complete: function() {
+
                 checkedGiftUrls++;
 
                 if (checkedGiftUrls >= giftUrls.length) {
