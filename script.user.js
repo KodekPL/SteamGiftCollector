@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.4.2
+// @version     1.5
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -19,7 +19,9 @@ var isRunning = false;
 var orgTitle = "";
 
 var forumUrls = [];
+var topicUrls = [];
 var checkedPageUrls = 0;
+var checkTopicPageUrls = 0;
 var checkedForumUrls = 0;
 
 var giftUrls = [];
@@ -32,6 +34,7 @@ var invalidGiftCount = 0;
 var buttonStatus;
 
 var avegareGiftsPerTopic = 3;
+var foundTopicPages = 0;
 
 var actionsDone = 0;
 var actionsEstimated = 0;
@@ -68,7 +71,7 @@ function disableButton() {
 
 function updateButtonStatus() {
     // (Pages * 100 Topics) + ((Pages * 100 Topics * Average Amount of Gifts Per Topic) * Twice of collecting and validation of gifts)
-    actionsEstimated = (scanPagesCount * 100) + ((scanPagesCount * 100 * avegareGiftsPerTopic) * 2);
+    actionsEstimated = (scanPagesCount * 100) + ((scanPagesCount * 100 * avegareGiftsPerTopic) * 2) + foundTopicPages;
 
     actionsDone++;
 
@@ -117,6 +120,52 @@ function asyncScanPagesForTopics() {
                 checkedPageUrls++;
 
                 if (checkedPageUrls >= scanPagesCount) {
+                    asyncScanForTopicPages();
+                }
+            }
+        });
+    }
+}
+
+function asyncScanForTopicPages() {
+    console.log("Scanned " + scanPagesCount + " pages and found " + forumUrls.length + " topics...");
+    console.log("Scanning for topic pages...");
+
+    for (var i = 0; i < forumUrls.length; i++) {
+        $.ajax({
+            url : forumUrls[i],
+            success : function (source) {
+                var pagesCount = 0;
+
+                // Scan for links to next pages
+                for (var i = 1; i <= 100; i++) {
+                    if (source.indexOf("search?page=" + i) == -1) {
+                        pagesCount = i - 1;
+                        break;
+                    }
+                }
+
+                // If found non, set to the first page
+                if (pagesCount == 0) {
+                    pagesCount = 1;
+                }
+
+                foundTopicPages += pagesCount;
+
+                // Collect links to topic pages
+                for (var i = 1; i <= pagesCount; i++) {
+                    var topicPageUrl = this.url + "/search?page=" + i;
+
+                    if (!containsString(topicUrls, topicPageUrl)) {
+                        topicUrls.push(topicPageUrl);
+
+                        updateButtonStatus();
+                    }
+                }
+
+                checkTopicPageUrls++;
+
+                if (checkTopicPageUrls >= forumUrls.length) {
                     asyncScanForGifts();
                 }
             }
@@ -125,12 +174,12 @@ function asyncScanPagesForTopics() {
 }
 
 function asyncScanForGifts() {
-    console.log("Scanned " + scanPagesCount + " pages and found " + forumUrls.length + " topics...");
+    console.log("Scanned " + topicUrls.length + " topic pages...");
     console.log("Scanning for gifts...");
 
-    for (var i = 0; i < forumUrls.length; i++) {
+    for (var i = 0; i < topicUrls.length; i++) {
         $.ajax({
-            url : forumUrls[i],
+            url : topicUrls[i],
             success : function (source) {
                 var urls = findUrls(source);
 
@@ -147,7 +196,7 @@ function asyncScanForGifts() {
 
                 checkedForumUrls++;
 
-                if (checkedForumUrls >= forumUrls.length) {
+                if (checkedForumUrls >= topicUrls.length) {
                     onGiftScanComplete();
                 }
             }
@@ -160,7 +209,7 @@ function onGiftScanComplete() {
 
     avegareGiftsPerTopic = giftUrls.length / (scanPagesCount * 100);
 
-    console.log("Average gifts per topic: " + avegareGiftsPerTopic);
+    console.log("Average gifts per topic page: " + avegareGiftsPerTopic);
 
     asyncScanForValidGifts();
 }
