@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.4
+// @version     1.4.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -31,8 +31,10 @@ var invalidGiftCount = 0;
 
 var buttonStatus;
 
-var maxStatus = 3;
-var setStatus = -1;
+var avegareGiftsPerTopic = 3;
+
+var actionsDone = 0;
+var actionsEstimated = 0;
 
 $(document).ready(function() {
     var sidebar = document.getElementsByClassName('sidebar')[0];
@@ -65,9 +67,15 @@ function disableButton() {
 }
 
 function updateButtonStatus() {
-    setStatus++;
+    // (Pages * 100 Topics) + ((Pages * 100 Topics * Average Amount of Gifts Per Topic) * Twice of collecting and validation of gifts)
+    actionsEstimated = (scanPagesCount * 100) + ((scanPagesCount * 100 * avegareGiftsPerTopic) * 2);
 
-    setButtonStatus('Collecting... (' + setStatus + '/' + maxStatus + ')');
+    actionsDone++;
+
+    var percent = Math.round(actionsDone / actionsEstimated * 100);
+
+    setButtonStatus('Collecting... (' + percent + '%)');
+    document.title = orgTitle + " (collecting " + percent + "%...)";
 }
 
 function initScan() {
@@ -77,11 +85,10 @@ function initScan() {
 
     isRunning = true;
 
+    orgTitle = document.title;
+
     disableButton();
     updateButtonStatus();
-
-    orgTitle = document.title;
-    document.title = orgTitle + " (collecting...)";
 
     asyncScanPagesForTopics();
 }
@@ -102,6 +109,8 @@ function asyncScanPagesForTopics() {
 
                     if (url.indexOf('/discussion/') >= 0 && !containsString(forumUrls, url)) {
                         forumUrls.push(url);
+
+                        updateButtonStatus();
                     }
                 }
 
@@ -116,8 +125,6 @@ function asyncScanPagesForTopics() {
 }
 
 function asyncScanForGifts() {
-    updateButtonStatus();
-
     console.log("Scanned " + scanPagesCount + " pages and found " + forumUrls.length + " topics...");
     console.log("Scanning for gifts...");
 
@@ -133,6 +140,8 @@ function asyncScanForGifts() {
                     if (url.indexOf('/giveaway/') >= 0 && url.indexOf('steamgifts.com') >= 0 && !containsString(giftUrls, url)) {
                         // Remove anything past gift id in the url
                         giftUrls.push(url.split('/', 6).join('/'));
+
+                        updateButtonStatus();
                     }
                 }
             },
@@ -150,7 +159,9 @@ function asyncScanForGifts() {
 function onGiftScanComplete() {
     console.log("Scanned " + giftUrls.length + " gifts...");
 
-    updateButtonStatus();
+    avegareGiftsPerTopic = giftUrls.length / (scanPagesCount * 100);
+
+    console.log("Average gifts per topic: " + avegareGiftsPerTopic);
 
     asyncScanForValidGifts();
 }
@@ -167,6 +178,8 @@ function asyncScanForValidGifts() {
                 if (validResult == null) {
                     // Add to valid gifts
                     validGiftUrls.push(this.url);
+
+                    updateButtonStatus();
                 } else {
                     // Add to invalid gifts with result
 
@@ -180,6 +193,8 @@ function asyncScanForValidGifts() {
                     invalidGiftUrls[validResult] = invalidArray;
 
                     invalidGiftCount++;
+
+                    updateButtonStatus();
                 }
             },
             error: function() {
@@ -195,6 +210,8 @@ function asyncScanForValidGifts() {
                 invalidGiftUrls['Errors'] = invalidArray;
 
                 invalidGiftCount++;
+
+                updateButtonStatus();
             },
             complete: function() {
                 checkedGiftUrls++;
@@ -213,7 +230,6 @@ function onValidGiftScanComplete() {
     document.title = orgTitle + " (done)";
 
     document.getElementsByClassName('page__inner-wrap')[0].remove();
-    // document.getElementsByClassName('footer__outer-wrap')[0].remove();
 
     var contentDiv = document.getElementsByClassName('page__outer-wrap')[0];
     var content = "";
