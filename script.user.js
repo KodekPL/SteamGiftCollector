@@ -4,34 +4,38 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.5
+// @version     1.5.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
 // @grant       none
 // ==/UserScript==
 
-var urlRegexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
-var scanPagesCount = 5;
-
+// Is running?
 var isRunning = false;
 
-var orgTitle = "";
+// Settings
+var scanPagesCount = 4;
 
-var forumUrls = [];
+// Collected forum pages
+var forumPageUrls = [];
+var checkedForumPageUrls = 0;
+
+// Collected topics
 var topicUrls = [];
-var checkedPageUrls = 0;
-var checkTopicPageUrls = 0;
-var checkedForumUrls = 0;
+var checkTopicUrls = 0;
 
+// Collected gifts
 var giftUrls = [];
+var checkedTopicsForGiftsUrls = 0;
 var checkedGiftUrls = 0;
 
+// Validated gifts
 var validGiftUrls = []; // Array
 var invalidGiftUrls = {}; // Map (String <-> Array)
-var invalidGiftCount = 0;
 
-var buttonStatus;
+// Progress data
+var orgTitle = "";
 
 var avegareGiftsPerTopic = 3;
 var foundTopicPages = 0;
@@ -39,6 +43,11 @@ var foundTopicPages = 0;
 var actionsDone = 0;
 var actionsEstimated = 0;
 
+////////////////////
+////////////////////
+/// BUTTON SETUP ///
+////////////////////
+////////////////////
 $(document).ready(function() {
     var sidebar = document.getElementsByClassName('sidebar')[0];
 
@@ -57,29 +66,11 @@ $(document).ready(function() {
     };
 });
 
-function setButtonStatus(text) {
-    var status = document.getElementById('collector-status');
-
-    status.innerHTML = text;
-}
-
-function disableButton() {
-    var button = document.getElementById('collector-button');
-
-    button.className = 'sidebar__action-button is-disabled';
-}
-
-function updateButtonStatus() {
-    // (Pages * 100 Topics) + ((Pages * 100 Topics * Average Amount of Gifts Per Topic) * Twice of collecting and validation of gifts)
-    actionsEstimated = (scanPagesCount * 100) + ((scanPagesCount * 100 * avegareGiftsPerTopic) * 2) + foundTopicPages;
-
-    actionsDone++;
-
-    var percent = Math.round(actionsDone / actionsEstimated * 100);
-
-    setButtonStatus('Collecting... (' + percent + '%)');
-    document.title = orgTitle + " (collecting " + percent + "%...)";
-}
+///////////////////////////
+///////////////////////////
+/// STEP 1 - START SCAN ///
+///////////////////////////
+///////////////////////////
 
 function initScan() {
     if (isRunning) {
@@ -91,10 +82,16 @@ function initScan() {
     orgTitle = document.title;
 
     disableButton();
-    updateButtonStatus();
+    updateScanStatusData();
 
     asyncScanPagesForTopics();
 }
+
+////////////////////////////////////
+////////////////////////////////////
+/// STEP 2 - COLLECT FORUM PAGES ///
+////////////////////////////////////
+////////////////////////////////////
 
 function asyncScanPagesForTopics() {
     console.log("Scanning pages for topics...");
@@ -110,16 +107,16 @@ function asyncScanPagesForTopics() {
                 for (var i = 0; i < urls.length; i++) {
                     var url = urls[i];
 
-                    if (url.indexOf('/discussion/') >= 0 && !containsString(forumUrls, url)) {
-                        forumUrls.push(url);
+                    if (url.indexOf('/discussion/') >= 0 && !containsString(forumPageUrls, url)) {
+                        forumPageUrls.push(url);
 
-                        updateButtonStatus();
+                        updateScanStatusData();
                     }
                 }
 
-                checkedPageUrls++;
+                checkedForumPageUrls++;
 
-                if (checkedPageUrls >= scanPagesCount) {
+                if (checkedForumPageUrls >= scanPagesCount) {
                     asyncScanForTopicPages();
                 }
             }
@@ -127,13 +124,19 @@ function asyncScanPagesForTopics() {
     }
 }
 
+/////////////////////////////////////
+/////////////////////////////////////
+/// STEP 3 - COLLECT FORUM TOPICS ///
+/////////////////////////////////////
+/////////////////////////////////////
+
 function asyncScanForTopicPages() {
-    console.log("Scanned " + scanPagesCount + " pages and found " + forumUrls.length + " topics...");
+    console.log("Scanned " + scanPagesCount + " pages and found " + forumPageUrls.length + " topics...");
     console.log("Scanning for topic pages...");
 
-    for (var i = 0; i < forumUrls.length; i++) {
+    for (var i = 0; i < forumPageUrls.length; i++) {
         $.ajax({
-            url : forumUrls[i],
+            url : forumPageUrls[i],
             success : function (source) {
                 var pagesCount = 0;
 
@@ -159,19 +162,25 @@ function asyncScanForTopicPages() {
                     if (!containsString(topicUrls, topicPageUrl)) {
                         topicUrls.push(topicPageUrl);
 
-                        updateButtonStatus();
+                        updateScanStatusData();
                     }
                 }
 
-                checkTopicPageUrls++;
+                checkTopicUrls++;
 
-                if (checkTopicPageUrls >= forumUrls.length) {
+                if (checkTopicUrls >= forumPageUrls.length) {
                     asyncScanForGifts();
                 }
             }
         });
     }
 }
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+/// STEP 4 - COLLECT GIFTS FROM TOPICS ///
+//////////////////////////////////////////
+//////////////////////////////////////////
 
 function asyncScanForGifts() {
     console.log("Scanned " + topicUrls.length + " topic pages...");
@@ -190,31 +199,32 @@ function asyncScanForGifts() {
                         // Remove anything past gift id in the url
                         giftUrls.push(url.split('/', 6).join('/'));
 
-                        updateButtonStatus();
+                        updateScanStatusData();
                     }
                 }
 
-                checkedForumUrls++;
+                checkedTopicsForGiftsUrls++;
 
-                if (checkedForumUrls >= topicUrls.length) {
-                    onGiftScanComplete();
+                if (checkedTopicsForGiftsUrls >= topicUrls.length) {
+                    asyncScanForValidGifts();
                 }
             }
         });
     }
 }
 
-function onGiftScanComplete() {
+/////////////////////////////////////////
+/////////////////////////////////////////
+/// STEP 5 - VALIDATE COLLECTED GIFTS ///
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+function asyncScanForValidGifts() {
     console.log("Scanned " + giftUrls.length + " gifts...");
 
     avegareGiftsPerTopic = giftUrls.length / (scanPagesCount * 100);
 
     console.log("Average gifts per topic page: " + avegareGiftsPerTopic);
-
-    asyncScanForValidGifts();
-}
-
-function asyncScanForValidGifts() {
     console.log("Validating gifts...");
 
     for (var i = 0; i < giftUrls.length; i++) {
@@ -227,7 +237,7 @@ function asyncScanForValidGifts() {
                     // Add to valid gifts
                     validGiftUrls.push(this.url);
 
-                    updateButtonStatus();
+                    updateScanStatusData();
                 } else {
                     // Add to invalid gifts with result
 
@@ -240,9 +250,7 @@ function asyncScanForValidGifts() {
                     invalidArray.push(this.url);
                     invalidGiftUrls[validResult] = invalidArray;
 
-                    invalidGiftCount++;
-
-                    updateButtonStatus();
+                    updateScanStatusData();
                 }
 
                 checkedGiftUrls++;
@@ -263,9 +271,7 @@ function asyncScanForValidGifts() {
                 invalidArray.push(this.url);
                 invalidGiftUrls['Errors'] = invalidArray;
 
-                invalidGiftCount++;
-
-                updateButtonStatus();
+                updateScanStatusData();
 
                 checkedGiftUrls++;
 
@@ -276,6 +282,12 @@ function asyncScanForValidGifts() {
         });
     }
 }
+
+///////////////////////////////
+///////////////////////////////
+/// STEP 6 - DISPLAY RESULT ///
+///////////////////////////////
+///////////////////////////////
 
 function onValidGiftScanComplete() {
     console.log("Validated " + validGiftUrls.length + " gifts...");
@@ -314,6 +326,41 @@ function onValidGiftScanComplete() {
     contentDiv.innerHTML = content;
 }
 
+/////////////
+/////////////
+/// UTILS ///
+/////////////
+/////////////
+
+// Disable of scan button
+function disableButton() {
+    var button = document.getElementById('collector-button');
+
+    button.className = 'sidebar__action-button is-disabled';
+}
+
+// Update scan progress data
+function updateScanStatusData() {
+    // (Pages * 100 Topics) + ((Pages * 100 Topics * Average Amount of Gifts Per Topic) * Twice of collecting and validation of gifts)
+    actionsEstimated = (scanPagesCount * 100) + ((scanPagesCount * 100 * avegareGiftsPerTopic) * 2) + foundTopicPages;
+
+    actionsDone++;
+
+    var percent = Math.round(actionsDone / actionsEstimated * 100);
+
+    updateStatus('Collecting... (' + percent + '%)');
+}
+
+// User friendly scan status update
+function updateStatus(text) {
+    var buttonStatus = document.getElementById('collector-status');
+
+    buttonStatus.innerHTML = text;
+
+    document.title = orgTitle + " - " + text;
+}
+
+// Gift validation
 function isValidGift(source) {
     var endPoint = source.indexOf('Description');
 
@@ -381,6 +428,7 @@ function isValidGift(source) {
     return null;
 }
 
+// Checking if text has string before point
 function hasStringBefore(source, text, endPoint) {
     var index = source.indexOf(text);
 
@@ -395,6 +443,7 @@ function hasStringBefore(source, text, endPoint) {
     return false;
 }
 
+// Checking if array contains string
 function containsString(array, text) {
     for (var i = 0; i < array.length; i++) {
         if (array[i].toUpperCase() === text.toUpperCase()) {
@@ -405,7 +454,9 @@ function containsString(array, text) {
     return false;
 }
 
+// Finding urls in text
 function findUrls(source) {
+    var urlRegexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
     var urlArray = [];
     var matchArray;
 
