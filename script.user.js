@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.5.1
+// @version     1.5.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -364,6 +364,11 @@ function updateStatus(text) {
 function isValidGift(source) {
     var endPoint = source.indexOf('Description');
 
+    // Ended check
+    if (hasStringBefore(source, 'Ended', endPoint)) {
+        return "Ended";
+    }
+
     // Contributor Level Required check
     if (hasStringBefore(source, 'featured__column--contributor-level--negative', endPoint)) {
         return "Too Low Level";
@@ -398,11 +403,6 @@ function isValidGift(source) {
     // Begins check
     if (hasStringBefore(source, 'Begins', endPoint)) {
         return "Not yet started";
-    }
-
-    // Ended check
-    if (hasStringBefore(source, 'Ended', endPoint)) {
-        return "Ended";
     }
 
     // Restricted Region
