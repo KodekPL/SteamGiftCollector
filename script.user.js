@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.5.2
+// @version     1.5.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -27,6 +27,7 @@ var checkTopicUrls = 0;
 
 // Collected gifts
 var giftUrls = [];
+var giftTopics = {};
 var checkedTopicsForGiftsUrls = 0;
 var checkedGiftUrls = 0;
 
@@ -197,8 +198,11 @@ function asyncScanForGifts() {
 
                     if (url.indexOf('/giveaway/') >= 0 && url.indexOf('steamgifts.com') >= 0 && !containsString(giftUrls, url)) {
                         // Remove anything past gift id in the url
-                        giftUrls.push(url.split('/', 6).join('/'));
-
+                        var giftUrl = url.split('/', 6).join('/');
+                         
+                        giftUrls.push(giftUrl);
+                        giftTopics[giftUrl] = this.url;
+                        
                         updateScanStatusData();
                     }
                 }
@@ -305,7 +309,7 @@ function onValidGiftScanComplete() {
     content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Valid Gifts (" + validGiftUrls.length + ")</div></div>");
 
     for (var i = 0; i < validGiftUrls.length; i++) {
-        content += ("<a href='" + validGiftUrls[i] + "'><img src='" + validGiftUrls[i] + "/signature.png'>" + "</a>");
+        content += ("<a href='" + validGiftUrls[i] + "' target='_blank' onclick=window.open('" + giftTopics[validGiftUrls[i]] + "')><img src='" + validGiftUrls[i] + "/signature.png'></a>");
     }
 
     // Invalid Gifts
@@ -316,7 +320,7 @@ function onValidGiftScanComplete() {
             content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Invalid gifts - " + key + " (" + invalidArray.length + ")</div></div><br>");
 
             for (var i = 0; i < invalidArray.length; i++) {
-                content += ("<a class='giveaway__username' href='" + invalidArray[i] + "'>" + invalidArray[i] + "</a><br>");
+                content += ("<a class='giveaway__username' href='" + invalidArray[i] + "' target='_blank'>" + invalidArray[i] + "</a> [<a class='giveaway__username' href='" + giftTopics[invalidArray[i]] + "' target='_blank'>Thread</a>]<br>");
             }
 
             content += "<br>";
