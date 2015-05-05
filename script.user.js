@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.6.1
+// @version     1.6.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -452,9 +452,14 @@ function isValidGift(source) {
         return "Restricted Regions";
     }
 
-    // No Permission
+    // No Permission - Steam Group
+    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'you\'re not a member of the required Steam groups', endPoint)) {
+        return "No Permission - Steam Group";
+    }
+
+    // No Permission - Whitelist
     if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint)) {
-        return "No Permission";
+        return "No Permission - Whitelist";
     }
 
     // Deleted
