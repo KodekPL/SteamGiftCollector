@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.5.3
+// @version     1.6
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -199,10 +199,10 @@ function asyncScanForGifts() {
                     if (url.indexOf('/giveaway/') >= 0 && url.indexOf('steamgifts.com') >= 0 && !containsString(giftUrls, url)) {
                         // Remove anything past gift id in the url
                         var giftUrl = url.split('/', 6).join('/');
-                         
+
                         giftUrls.push(giftUrl);
                         giftTopics[giftUrl] = this.url;
-                        
+
                         updateScanStatusData();
                     }
                 }
@@ -303,14 +303,31 @@ function onValidGiftScanComplete() {
     var contentDiv = document.getElementsByClassName('page__outer-wrap')[0];
     var content = "";
 
+    content += ("<style>#gift_table td {text-align: center}</style>");
+
     content += ("<title>Collected Gifts - " + orgTitle + "</title>");
 
     // Heading - Valid Gifts
     content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Valid Gifts (" + validGiftUrls.length + ")</div></div>");
 
+    content += "<table align='center' id='gift_table'>";
+
+    var tableImgData = "";
+    var tableLinkData = "";
+
     for (var i = 0; i < validGiftUrls.length; i++) {
-        content += ("<a href='" + validGiftUrls[i] + "' target='_blank' onclick=window.open('" + giftTopics[validGiftUrls[i]] + "')><img src='" + validGiftUrls[i] + "/signature.png'></a>");
+        tableImgData += ("<td><a href='" + validGiftUrls[i] + "' target='_blank'><img src='" + validGiftUrls[i] + "/signature.png'></a></td>");
+        tableLinkData += ("<td><a class='giveaway__username' href='" + validGiftUrls[i] + "' target='_blank'>" + validGiftUrls[i].split('/', 5).join('/') + "</a> [<a class='giveaway__username' href='" + giftTopics[validGiftUrls[i]] + "' target='_blank'>Thread</a>]</td>");
+
+        if ((i + 1) % 2 == 0 || (i == (validGiftUrls.length - 1) && (i + 1) % 2 == 1)) {
+            content += ("<tr>" + tableImgData + "</tr><tr>" + tableLinkData + "</tr>");
+
+            tableImgData = "";
+            tableLinkData = "";
+        }
     }
+
+    content += "</table><br>";
 
     // Invalid Gifts
     for (var key in invalidGiftUrls) {
