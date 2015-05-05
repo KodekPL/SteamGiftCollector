@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.6
+// @version     1.6.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -385,10 +385,23 @@ function updateStatus(text) {
 function isValidGift(source) {
     var endPoint = source.indexOf('Description');
 
+    //
+    // Time Checks
+    //
+
     // Ended check
     if (hasStringBefore(source, 'Ended', endPoint)) {
         return "Ended";
     }
+
+    // Begins check
+    if (hasStringBefore(source, 'Begins', endPoint)) {
+        return "Not yet started";
+    }
+
+    //
+    // Requirements Checks
+    //
 
     // Contributor Level Required check
     if (hasStringBefore(source, 'featured__column--contributor-level--negative', endPoint)) {
@@ -416,14 +429,22 @@ function isValidGift(source) {
         return "Already Entered";
     }
 
+    //
+    // Can join after above checkings?
+    //
+
+    // Entry check (There is button to join)
+    if (hasStringBefore(source, 'entry_insert', -1)) {
+        return null;
+    }
+
+    //
+    // Other Checkings
+    //
+
     // Whitelist check
     if (hasStringBefore(source, 'featured__column--whitelist', endPoint)) {
         return "Whitelist";
-    }
-
-    // Begins check
-    if (hasStringBefore(source, 'Begins', endPoint)) {
-        return "Not yet started";
     }
 
     // Restricted Region
@@ -441,12 +462,7 @@ function isValidGift(source) {
         return "Deleted";
     }
 
-    // No Entry check
-    if (!hasStringBefore(source, 'entry_insert', -1)) {
-        return "Other";
-    }
-
-    return null;
+    return "Other";
 }
 
 // Checking if text has string before point
