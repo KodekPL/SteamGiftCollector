@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.6.2
+// @version     1.6.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -386,20 +386,6 @@ function isValidGift(source) {
     var endPoint = source.indexOf('Description');
 
     //
-    // Time Checks
-    //
-
-    // Ended check
-    if (hasStringBefore(source, 'Ended', endPoint)) {
-        return "Ended";
-    }
-
-    // Begins check
-    if (hasStringBefore(source, 'Begins', endPoint)) {
-        return "Not yet started";
-    }
-
-    //
     // Requirements Checks
     //
 
@@ -436,6 +422,20 @@ function isValidGift(source) {
     // Entry check (There is button to join)
     if (hasStringBefore(source, 'entry_insert', -1)) {
         return null;
+    }
+
+    //
+    // Time Checks
+    //
+
+    // Ended check
+    if (hasStringBefore(source, 'Ended', endPoint)) {
+        return "Ended";
+    }
+
+    // Begins check
+    if (hasStringBefore(source, 'Begins', endPoint)) {
+        return "Not yet started";
     }
 
     //
