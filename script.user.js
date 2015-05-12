@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.6.3
+// @version     1.6.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -453,12 +453,17 @@ function isValidGift(source) {
     }
 
     // No Permission - Steam Group
-    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'you\'re not a member of the required Steam groups', endPoint)) {
+    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'Steam group', endPoint)) {
         return "No Permission - Steam Group";
     }
 
+    // No Permission - Blacklist
+    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'blacklist', endPoint)) {
+        return "No Permission - Blacklist";
+    }
+
     // No Permission - Whitelist
-    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint)) {
+    if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'whitelist', endPoint)) {
         return "No Permission - Whitelist";
     }
 
