@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.6.4
+// @version     1.7
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -383,45 +383,58 @@ function updateStatus(text) {
 
 // Gift validation
 function isValidGift(source) {
-    var endPoint = source.indexOf('Description');
+    var canJoinGift = false;
+    var reasonForInvalid = "Other";
+
+    var endPoint = source.indexOf('page__description');
 
     //
     // Requirements Checks
     //
 
-    // Contributor Level Required check
-    if (hasStringBefore(source, 'featured__column--contributor-level--negative', endPoint)) {
-        return "Too Low Level";
-    }
-
     // Error Entry Button check
     if (hasStringBefore(source, 'sidebar__error', endPoint)) {
+        // Not Enough Points (Can Join Overall)
+        canJoinGift = true;
+
         // Exists in Account check
         if (hasStringBefore(source, 'Exists in Account', endPoint)) {
-            return "Exists in Account";
+            reasonForInvalid = "Exists in Account";
+            canJoinGift = false;
         }
 
         // Missing Base Game check
         if (hasStringBefore(source, 'Missing Base Game', endPoint)) {
-            return "Missing Base Game";
+            reasonForInvalid = "Missing Base Game";
+            canJoinGift = false;
         }
+    }
 
-        // Not Enough Points check (VALID GIFT)
-        return null;
+    // Entry check (There is button to join)
+    if (hasStringBefore(source, 'entry_insert', endPoint)) {
+        canJoinGift = true;
+    }
+
+    // Contributor Level Required check
+    if (hasStringBefore(source, 'contributor-level--negative', endPoint)) {
+        reasonForInvalid = "Too Low Level";
+        canJoinGift = false;
     }
 
     // Already Entered check
     if (hasStringBefore(source, 'sidebar__entry-insert is-hidden', endPoint)) {
-        return "Already Entered";
+        reasonForInvalid = "Already Entered";
+        canJoinGift = false;
     }
 
     //
-    // Can join after above checkings?
+    // Public Gift Checks
     //
 
-    // Entry check (There is button to join)
-    if (hasStringBefore(source, 'entry_insert', -1)) {
-        return null;
+    // Has at least one element for non-public gift
+    if (hasStringBefore(source, 'featured__outer-wrap--giveaway', endPoint) && !hasStringBefore(source, 'featured__column--whitelist', endPoint) && !hasStringBefore(source, 'featured__column--group', endPoint) && !hasStringBefore(source, 'featured__column--invite-only', endPoint)) {
+        reasonForInvalid = "Public Gift";
+        canJoinGift = false;
     }
 
     //
@@ -430,12 +443,14 @@ function isValidGift(source) {
 
     // Ended check
     if (hasStringBefore(source, 'Ended', endPoint)) {
-        return "Ended";
+        reasonForInvalid = "Ended";
+        canJoinGift = false;
     }
 
     // Begins check
     if (hasStringBefore(source, 'Begins', endPoint)) {
-        return "Not yet started";
+        reasonForInvalid = "Not yet started";
+        canJoinGift = false;
     }
 
     //
@@ -444,35 +459,45 @@ function isValidGift(source) {
 
     // Whitelist check
     if (hasStringBefore(source, 'featured__column--whitelist', endPoint)) {
-        return "Whitelist";
+        reasonForInvalid = "Whitelist";
+        canJoinGift = false;
     }
 
     // Restricted Region
     if (hasStringBefore(source, 'This giveaway is restricted to the following region', endPoint)) {
-        return "Restricted Regions";
+        reasonForInvalid = "Restricted Regions";
+        canJoinGift = false;
     }
 
     // No Permission - Steam Group
     if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'Steam group', endPoint)) {
-        return "No Permission - Steam Group";
+        reasonForInvalid = "No Permission - Steam Group";
+        canJoinGift = false;
     }
 
     // No Permission - Blacklist
     if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'blacklist', endPoint)) {
-        return "No Permission - Blacklist";
+        reasonForInvalid = "No Permission - Blacklist";
+        canJoinGift = false;
     }
 
     // No Permission - Whitelist
     if (hasStringBefore(source, 'You do not have permission to view this giveaway', endPoint) && hasStringBefore(source, 'whitelist', endPoint)) {
-        return "No Permission - Whitelist";
+        reasonForInvalid = "No Permission - Whitelist";
+        canJoinGift = false;
     }
 
     // Deleted
     if (hasStringBefore(source, 'Deleted', endPoint)) {
-        return "Deleted";
+        reasonForInvalid = "Deleted";
+        canJoinGift = false;
     }
 
-    return "Other";
+    if (canJoinGift) {
+        return null;
+    }
+
+    return reasonForInvalid;
 }
 
 // Checking if text has string before point
