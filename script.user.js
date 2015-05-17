@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.7.1
+// @version     1.7.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -15,7 +15,7 @@
 var isRunning = false;
 
 // Settings
-var scanPagesCount = 1;
+var scanPagesCount = 4;
 
 // Collected forum pages
 var forumPageUrls = [];
