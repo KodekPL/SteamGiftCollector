@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     1.7
+// @version     1.7.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -15,7 +15,7 @@
 var isRunning = false;
 
 // Settings
-var scanPagesCount = 4;
+var scanPagesCount = 1;
 
 // Collected forum pages
 var forumPageUrls = [];
@@ -333,13 +333,19 @@ function onValidGiftScanComplete() {
     for (var key in invalidGiftUrls) {
         if (invalidGiftUrls.hasOwnProperty(key)) {
             var invalidArray = invalidGiftUrls[key];
+            var showContentId = key.split(" ").join("_").toLowerCase();
 
-            content += ("<div class='page__heading'><div class='page__heading__breadcrumbs'>Invalid gifts - " + key + " (" + invalidArray.length + ")</div></div><br>");
+            content += ("<div class='page__heading'>");
+            content += ("<div class='page__heading__breadcrumbs'>Invalid gifts - " + key + " (" + invalidArray.length + ")</div>");
+            content += ("<div class='sidebar__action-button' onclick='document.getElementById(\"" + showContentId + "\").style.display = \"block\";'>Show</div>");
+            content += ("</div><br>");
+            content += ("<div id='" + showContentId + "' style='display: none;'>");
 
             for (var i = 0; i < invalidArray.length; i++) {
                 content += ("<a class='giveaway__username' href='" + invalidArray[i] + "' target='_blank'>" + invalidArray[i] + "</a> [<a class='giveaway__username' href='" + giftTopics[invalidArray[i]] + "' target='_blank'>Thread</a>]<br>");
             }
 
+            content += "</div>";
             content += "<br>";
         }
     }
@@ -386,7 +392,8 @@ function isValidGift(source) {
     var canJoinGift = false;
     var reasonForInvalid = "Other";
 
-    var endPoint = source.indexOf('page__description');
+    // TODO: Find better end point
+    var endPoint = source.indexOf('fa-search');
 
     //
     // Requirements Checks
