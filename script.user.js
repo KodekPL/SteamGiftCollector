@@ -28,7 +28,7 @@ var giftsTopics = {}; // Holds gift link and topic it came from
 var progressGiftsCount = 0; // Hold amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected valid gifts
 
-var lastAddedGiftTime = Date.now();
+var lastAddedGiftTime = Number.MAX_VALUE;
 
 //////
 // RUNTIME: Startup - Add start button
@@ -277,7 +277,14 @@ function displayGiftCard(url, source) {
     // Add time to info div
     var giftTimeIcon = document.createElement("i");
     giftTimeIcon.setAttribute("class", "fa fa-clock-o");
-    giftTimeIcon.setAttribute("style", "color:#6b7a8c;");
+
+    if (giftTime[2] > 0 && giftTime[2] <= 2) {
+        giftTimeIcon.setAttribute("style", "color:#c75151;");
+    } else if (giftTime[2] == 3) {
+        giftTimeIcon.setAttribute("style", "color:#d6a42c;");
+    } else {
+        giftTimeIcon.setAttribute("style", "color:#6b7a8c;");
+    }
 
     var giftTimeText = document.createElement("span");
     giftTimeText.setAttribute("title", giftTime[0]);
@@ -467,6 +474,7 @@ function getGiftEntries(source) {
 function getGiftTime(source) {
     var endTime;
     var remainingTime;
+    var timeLevel; // 1 - seconds, 2 - minutes, 3 - hours, 4 - days, 5 - weeks, 0 - unknown
 
     // Get end point of time data
     var timeEndPoint = source.indexOf("remaining");
@@ -489,8 +497,23 @@ function getGiftTime(source) {
     remainingTime = remainingTime.substring(1, remainingTime.length);
     remainingTime += "remaining";
 
+    // Get time level result
+    if (remainingTime.indexOf("second") > -1) {
+        timeLevel = 1;
+    } else if (remainingTime.indexOf("minute") > -1) {
+        timeLevel = 2;
+    } else if (remainingTime.indexOf("hour") > -1) {
+        timeLevel = 3;
+    } else if (remainingTime.indexOf("day") > -1) {
+        timeLevel = 4;
+    } else if (remainingTime.indexOf("week") > -1) {
+        timeLevel = 5;
+    } else {
+        timeLevel = 0;
+    }
+
     // Return result
-    return [endTime, remainingTime];
+    return [endTime, remainingTime, timeLevel];
 }
 
 //////
