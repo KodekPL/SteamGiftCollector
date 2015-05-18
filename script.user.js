@@ -14,6 +14,12 @@ var scanPagesCount = 1; // How many forum pages to scan?
 var isRunning = false; // Is collecting in progress
 
 var giftCardsDiv; // Div with all gift cards
+var giftSecondsCardsDiv;
+var giftMinutesCardsDiv;
+var giftHoursCardsDiv;
+var giftDaysCardsDiv;
+var giftWeeksCardsDiv;
+
 var headingTitleDiv; // Div with valid gifts count
 var giftsLoadingText; // Div with progress text
 var giftsLoadingDiv; // Div with collecting information
@@ -196,6 +202,21 @@ function prepareGiftCardsContainer() {
     giftCardsDiv.setAttribute("class", "giveaway__columns");
     giftCardsDiv.setAttribute("style", "display:block; text-align:center;");
 
+    giftSecondsCardsDiv = document.createElement("div");
+    giftSecondsCardsDiv.setAttribute("style", "display:block; text-align:center;");
+
+    giftMinutesCardsDiv = document.createElement("div");
+    giftMinutesCardsDiv.setAttribute("style", "display:block; text-align:center;");
+
+    giftHoursCardsDiv = document.createElement("div");
+    giftHoursCardsDiv.setAttribute("style", "display:block; text-align:center;");
+
+    giftDaysCardsDiv = document.createElement("div");
+    giftDaysCardsDiv.setAttribute("style", "display:block; text-align:center;");
+
+    giftWeeksCardsDiv = document.createElement("div");
+    giftWeeksCardsDiv.setAttribute("style", "display:block; text-align:center;");
+
     // Setup heading for valid gifts
     var headingDiv = document.createElement("div");
     headingDiv.setAttribute("class", "page__heading");
@@ -208,9 +229,21 @@ function prepareGiftCardsContainer() {
     headingDiv.appendChild(headingTitleDiv);
 
     // Apply content
+    // TODO: Create your own separator line
+    var separatorLine = document.createElement("h3");
+    separatorLine.setAttribute("class", "sidebar__heading");
+
     contentDiv.appendChild(giftsLoadingDiv);
     contentDiv.appendChild(headingDiv);
-    contentDiv.appendChild(giftCardsDiv);
+    contentDiv.appendChild(giftSecondsCardsDiv);
+    contentDiv.appendChild(separatorLine.cloneNode(true));
+    contentDiv.appendChild(giftMinutesCardsDiv);
+    contentDiv.appendChild(separatorLine.cloneNode(true));
+    contentDiv.appendChild(giftHoursCardsDiv);
+    contentDiv.appendChild(separatorLine.cloneNode(true));
+    contentDiv.appendChild(giftDaysCardsDiv);
+    contentDiv.appendChild(separatorLine.cloneNode(true));
+    contentDiv.appendChild(giftWeeksCardsDiv);
 }
 
 //////
@@ -278,6 +311,7 @@ function displayGiftCard(url, source) {
     var giftTimeIcon = document.createElement("i");
     giftTimeIcon.setAttribute("class", "fa fa-clock-o");
 
+    // Set different colors depending of time level
     if (giftTime[2] > 0 && giftTime[2] <= 2) {
         giftTimeIcon.setAttribute("style", "color:#c75151;");
     } else if (giftTime[2] == 3) {
@@ -302,7 +336,19 @@ function displayGiftCard(url, source) {
     giftInfoDiv.appendChild(giftAuthorText);
 
     // Display result
-    giftCardsDiv.appendChild(cardContentDiv);
+    if (giftTime[2] == 1) {
+        giftSecondsCardsDiv.appendChild(cardContentDiv);
+    } else if (giftTime[2] == 2) {
+        giftMinutesCardsDiv.appendChild(cardContentDiv);
+    } else if (giftTime[2] == 3) {
+        giftHoursCardsDiv.appendChild(cardContentDiv);
+    } else if (giftTime[2] == 4) {
+        giftDaysCardsDiv.appendChild(cardContentDiv);
+    } else if (giftTime[2] == 5) {
+        giftWeeksCardsDiv.appendChild(cardContentDiv);
+    } else {
+        giftCardsDiv.appendChild(cardContentDiv);
+    }
 }
 
 function checkForFinish() {
