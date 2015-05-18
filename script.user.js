@@ -14,11 +14,6 @@ var scanPagesCount = 1; // How many forum pages to scan?
 var isRunning = false; // Is collecting in progress
 
 var giftCardsDiv; // Div with all gift cards
-var giftSecondsCardsDiv;
-var giftMinutesCardsDiv;
-var giftHoursCardsDiv;
-var giftDaysCardsDiv;
-var giftWeeksCardsDiv;
 
 var headingTitleDiv; // Div with valid gifts count
 var giftsLoadingText; // Div with progress text
@@ -30,6 +25,8 @@ var topicsTracker = []; // Holds all collected topic urls
 var topicsPagesTracker = []; // Holds all collected topics pages
 var giftsTracker = []; // Holds all collected gifts
 var giftsTopics = {}; // Holds gift link and topic it came from
+
+var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 
 var progressGiftsCount = 0; // Hold amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected valid gifts
@@ -202,21 +199,6 @@ function prepareGiftCardsContainer() {
     giftCardsDiv.setAttribute("class", "giveaway__columns");
     giftCardsDiv.setAttribute("style", "display:block; text-align:center;");
 
-    giftSecondsCardsDiv = document.createElement("div");
-    giftSecondsCardsDiv.setAttribute("style", "display:block; text-align:center;");
-
-    giftMinutesCardsDiv = document.createElement("div");
-    giftMinutesCardsDiv.setAttribute("style", "display:block; text-align:center;");
-
-    giftHoursCardsDiv = document.createElement("div");
-    giftHoursCardsDiv.setAttribute("style", "display:block; text-align:center;");
-
-    giftDaysCardsDiv = document.createElement("div");
-    giftDaysCardsDiv.setAttribute("style", "display:block; text-align:center;");
-
-    giftWeeksCardsDiv = document.createElement("div");
-    giftWeeksCardsDiv.setAttribute("style", "display:block; text-align:center;");
-
     // Setup heading for valid gifts
     var headingDiv = document.createElement("div");
     headingDiv.setAttribute("class", "page__heading");
@@ -229,21 +211,9 @@ function prepareGiftCardsContainer() {
     headingDiv.appendChild(headingTitleDiv);
 
     // Apply content
-    // TODO: Create your own separator line
-    var separatorLine = document.createElement("h3");
-    separatorLine.setAttribute("class", "sidebar__heading");
-
     contentDiv.appendChild(giftsLoadingDiv);
     contentDiv.appendChild(headingDiv);
-    contentDiv.appendChild(giftSecondsCardsDiv);
-    contentDiv.appendChild(separatorLine.cloneNode(true));
-    contentDiv.appendChild(giftMinutesCardsDiv);
-    contentDiv.appendChild(separatorLine.cloneNode(true));
-    contentDiv.appendChild(giftHoursCardsDiv);
-    contentDiv.appendChild(separatorLine.cloneNode(true));
-    contentDiv.appendChild(giftDaysCardsDiv);
-    contentDiv.appendChild(separatorLine.cloneNode(true));
-    contentDiv.appendChild(giftWeeksCardsDiv);
+    contentDiv.appendChild(giftCardsDiv);
 }
 
 //////
@@ -335,22 +305,24 @@ function displayGiftCard(url, source) {
     giftInfoDiv.appendChild(giftTimeText);
     giftInfoDiv.appendChild(giftAuthorText);
 
-    // Display result
-    if (giftTime[2] == 1) {
-        giftSecondsCardsDiv.appendChild(cardContentDiv);
-    } else if (giftTime[2] == 2) {
-        giftMinutesCardsDiv.appendChild(cardContentDiv);
-    } else if (giftTime[2] == 3) {
-        giftHoursCardsDiv.appendChild(cardContentDiv);
-    } else if (giftTime[2] == 4) {
-        giftDaysCardsDiv.appendChild(cardContentDiv);
-    } else if (giftTime[2] == 5) {
-        giftWeeksCardsDiv.appendChild(cardContentDiv);
-    } else {
-        giftCardsDiv.appendChild(cardContentDiv);
+    // Add card and sort
+    // sortedGiftCards[cardContentDiv] = convertRemainingToInt(giftTime[1]);
+    sortedGiftCards.push({node: cardContentDiv, time: convertRemainingToInt(giftTime[1])});
+
+    sortedGiftCards.sort(function(a, b) {
+        return a.time - b.time;
+    });
+
+    giftCardsDiv.innerHTML = "";
+
+    for (var i = 0; i < sortedGiftCards.length; i++) {
+        giftCardsDiv.appendChild(sortedGiftCards[i]["node"]);
     }
 }
 
+//////
+// RUNTIME: Check if collecting process has finished
+//////
 function checkForFinish() {
     if (Date.now() - lastAddedGiftTime > 15000) {
         giftsLoadingDiv.setAttribute("style", "display:none;");
@@ -360,6 +332,25 @@ function checkForFinish() {
     setTimeout(function() { 
         checkForFinish(); 
     }, 5000);
+}
+
+//////
+// UTIL: Convert remaning time to integer seconds
+//////
+function convertRemainingToInt(stringTime) {
+    var value = parseInt(stringTime.split(" ")[0]);
+
+    if (stringTime.indexOf("week") > -1) {
+        return value * 7 * 24 * 60 * 60;
+    } else if (stringTime.indexOf("day") > -1) {
+        return value * 24 * 60 * 60;
+    } else if (stringTime.indexOf("hour") > -1) {
+        return value * 60 * 60;
+    } else if (stringTime.indexOf("minute") > -1) {
+        return value * 60;
+    } else {
+        return 0;
+    }
 }
 
 //////
