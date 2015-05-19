@@ -11,30 +11,28 @@
 // Settings
 var scanPagesCount = 1; // How many forum pages to scan?
 
-var isRunning = false; // Is collecting in progress
+var isRunning = false; // Is script in progress
 
 var giftCardsDiv; // Div with all gift cards
-
 var headingTitleDiv; // Div with valid gifts count
-var giftsLoadingText; // Div with progress text
 var giftsLoadingDiv; // Div with collecting information
+var giftsLoadingText; // Div with progress text
 
-var forumPagesTracker = 0; // Holds amount of checked forum pages
-var topicPagesTracker = 0; // Holds amount of checked topic pages
-var topicsTracker = []; // Holds all collected topic urls
+var forumPagesTrackerCount = 0; // Holds amount of checked forum pages
 var topicsPagesTracker = []; // Holds all collected topics pages
+var topicsPagesTrackerCount = 0; // Holds amount of checked topic pages
+var topicsTracker = []; // Holds all collected topic urls
 var giftsTracker = []; // Holds all collected gifts
-var giftsTopics = {}; // Holds gift link and topic it came from
+var giftsTopicsTracker = {}; // Holds gift link and topic it came from
 
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 
 var progressGiftsCount = 0; // Hold amount of gifts that are in progress
-var collectedGiftsCount = 0; // Holds amount of collected valid gifts
-
-var lastAddedGiftTime = Number.MAX_VALUE;
+var collectedGiftsCount = 0; // Holds amount of collected gifts
+var collectedValidGiftsCount = 0; // Holds amount of collected valid gifts
 
 //////
-// RUNTIME: Startup - Add start button
+// RUNTIME: Startup - Add 'Collect Gifts' button to the sidebar
 //////
 $(document).ready(function() {
     var sidebarDiv = document.getElementsByClassName("sidebar")[0];
@@ -65,113 +63,9 @@ function startCollecting() {
 }
 
 //////
-// RUNTIME: Collect forum topics
-//////
-function asyncCollectTopics() {
-    console.log("Scanning pages for topics...");
-
-    for (var i = 1; i <= scanPagesCount; i++) {
-        $.ajax({
-            url : "http://www.steamgifts.com/discussions/search?page=" + i,
-            success : function (source) {
-                // Replace hrefs with site domain to extract topic urls easier
-                var fixSource = source.replace(/href="/g, "http://www.steamgifts.com");
-                var urls = extractUrls(fixSource);
-
-                for (var i = 0; i < urls.length; i++) {
-                    var url = urls[i];
-
-                    // Look for urls that contains discussion and aren't already on list
-                    if (url.indexOf("/discussion/") >= 0 && !containsString(topicsTracker, url)) {
-                        topicsTracker.push(url);
-                    }
-                }
-
-                forumPagesTracker++;
-
-                if (forumPagesTracker >= scanPagesCount) {
-                    asyncScanForTopicPages();
-                }
-            }
-        });
-    }
-}
-
-//////
-// RUNTIME: Collect topics pages
-//////
-function asyncScanForTopicPages() {
-    console.log("Scanned " + scanPagesCount + " pages and found " + topicsTracker.length + " topics.");
-    console.log("Scanning for topics pages...");
-
-    for (var i = 0; i < topicsTracker.length; i++) {
-        $.ajax({
-            url : topicsTracker[i],
-            success : function (source) {
-                // Collect all giveaway urls within first topic page
-                trackGiveawayUrls(source, this.url);
-
-                var pagesCount = 0;
-
-                // Scan for first 200 urls to next pages
-                for (var i = 200; i > 0; i--) {
-                    if (source.indexOf("search?page=" + i) >= 0) {
-                        pagesCount = i;
-                        break;
-                    }
-                }
-
-                // If found non, set to the first page
-                if (pagesCount === 0) {
-                    pagesCount = 1;
-                }
-
-                // Collect links to topic pages
-                for (var i2 = 2; i2 <= pagesCount; i2++) {
-                    var topicPageUrl = this.url + "/search?page=" + i2;
-
-                    if (!containsString(topicsPagesTracker, topicPageUrl)) {
-                        topicsPagesTracker.push(topicPageUrl);
-                    }
-                }
-
-                topicPagesTracker++;
-
-                console.log(topicPagesTracker + "/" + topicsTracker.length);
-
-                if (topicPagesTracker >= topicsTracker.length) {
-                    asyncScanTopicsForGifts();
-                }
-            }
-        });
-    }
-}
-
-//////
-// RUNTIME: Collect gifts from topics
-//////
-function asyncScanTopicsForGifts() {
-    console.log("Scanned " + topicsPagesTracker.length + " topics pages...");
-    console.log("Scanning for gifts...");
-
-    for (var i = 0; i < topicsPagesTracker.length; i++) {
-        $.ajax({
-            url : topicsPagesTracker[i],
-            success : function (source) {
-                trackGiveawayUrls(source, this.url);
-            }
-        });
-    }
-
-    checkForFinish();
-}
-
-//////
 // RUNTIME: Prepares inner div to contain gift cards
 //////
 function prepareGiftCardsContainer() {
-    // <i class="fa fa-refresh fa-spin"></i>
-
     // Remove default website code
     document.getElementsByClassName("page__inner-wrap")[0].remove();
 
@@ -187,9 +81,10 @@ function prepareGiftCardsContainer() {
     giftsLoadingIcon.setAttribute("style", "font-size:350%;");
 
     giftsLoadingText = document.createElement("span");
-    giftsLoadingText.innerHTML = " Collecting gifts...";
+    giftsLoadingText.innerHTML = " Scanning for gifts...";
     giftsLoadingText.setAttribute("class", "featured__heading__medium");
-    giftsLoadingText.setAttribute("style", "font-size:250%; vertical-align: middle;");
+    giftsLoadingText.setAttribute("style", "font-size:250%; vertical-align:middle;");
+    giftsLoadingText.setAttribute("title", "Valid/Overall/Progress");
 
     giftsLoadingDiv.appendChild(giftsLoadingIcon);
     giftsLoadingDiv.appendChild(giftsLoadingText);
@@ -214,6 +109,99 @@ function prepareGiftCardsContainer() {
     contentDiv.appendChild(giftsLoadingDiv);
     contentDiv.appendChild(headingDiv);
     contentDiv.appendChild(giftCardsDiv);
+}
+
+//////
+// RUNTIME: Collect forum topics
+//////
+function asyncCollectTopics() {
+    console.log("Scanning pages for topics...");
+
+    for (var i = 1; i <= scanPagesCount; i++) {
+        $.ajax({
+            url : "http://www.steamgifts.com/discussions/search?page=" + i,
+            success : function (source) {
+                // Replace hrefs with site domain to extract topic urls easier
+                var fixSource = source.replace(/href="/g, "http://www.steamgifts.com");
+                var extractedUrls = extractUrls(fixSource);
+
+                for (var i = 0; i < extractedUrls.length; i++) {
+                    var url = extractedUrls[i];
+
+                    // Look for urls that contains discussion and aren't already on tracker list
+                    if (url.indexOf("/discussion/") >= 0 && !containsString(topicsTracker, url)) {
+                        topicsTracker.push(url);
+                    }
+                }
+
+                forumPagesTrackerCount++;
+
+                if (forumPagesTrackerCount >= scanPagesCount) {
+                    asyncScanForTopicPages();
+                }
+            }
+        });
+    }
+}
+
+//////
+// RUNTIME: Collect topics pages
+//////
+function asyncScanForTopicPages() {
+    console.log("Scanned " + scanPagesCount + " pages and found " + topicsTracker.length + " topics.");
+    console.log("Scanning for topics pages...");
+
+    for (var i = 0; i < topicsTracker.length; i++) {
+        $.ajax({
+            url : topicsTracker[i],
+            success : function (source) {
+                // Collect all giveaway urls within first topic page
+                trackGiveawayUrls(source, this.url);
+
+                var pagesCount = 0;
+
+                // Scan for last page of topic
+                for (var i = 200; i > 0; i--) {
+                    if (source.indexOf("search?page=" + i) >= 0) {
+                        pagesCount = i;
+                        break;
+                    }
+                }
+
+                // Collect links to topic pages (start with second page as the first was already checked)
+                for (var i2 = 2; i2 <= pagesCount; i2++) {
+                    var topicPageUrl = this.url + "/search?page=" + i2;
+
+                    if (!containsString(topicsPagesTracker, topicPageUrl)) {
+                        topicsPagesTracker.push(topicPageUrl);
+                    }
+                }
+
+                topicsPagesTrackerCount++;
+
+                if (topicsPagesTrackerCount >= topicsTracker.length) {
+                    asyncScanTopicsForGifts();
+                }
+            }
+        });
+    }
+}
+
+//////
+// RUNTIME: Collect gifts from topics
+//////
+function asyncScanTopicsForGifts() {
+    console.log("Scanned " + topicsPagesTracker.length + " topics pages...");
+    console.log("Scanning for gifts...");
+
+    for (var i = 0; i < topicsPagesTracker.length; i++) {
+        $.ajax({
+            url : topicsPagesTracker[i],
+            success : function (source) {
+                trackGiveawayUrls(source, this.url);
+            }
+        });
+    }
 }
 
 //////
@@ -263,7 +251,6 @@ function displayGiftCard(url, source) {
 
     // Add game title to card
     var gameTitleDiv = document.createElement("div");
-    // featured__heading__medium
     gameTitleDiv.setAttribute("class", "featured__heading__medium");
     gameTitleDiv.setAttribute("style", "text-align:center; font-size:16px;");
     gameTitleDiv.innerHTML = giftGameTitle + " (" + giftEntries + " entries)";
@@ -273,22 +260,14 @@ function displayGiftCard(url, source) {
     // Add info div for time and author
     var giftInfoDiv = document.createElement("div");
     giftInfoDiv.setAttribute("class", "featured__column");
-    giftInfoDiv.setAttribute("style", "text-align: left;");
+    giftInfoDiv.setAttribute("style", "text-align:left;");
 
     cardContentDiv.appendChild(giftInfoDiv);
 
     // Add time to info div
     var giftTimeIcon = document.createElement("i");
     giftTimeIcon.setAttribute("class", "fa fa-clock-o");
-
-    // Set different colors depending of time level
-    if (giftTime[2] > 0 && giftTime[2] <= 2) {
-        giftTimeIcon.setAttribute("style", "color:#c75151;");
-    } else if (giftTime[2] == 3) {
-        giftTimeIcon.setAttribute("style", "color:#d6a42c;");
-    } else {
-        giftTimeIcon.setAttribute("style", "color:#6b7a8c;");
-    }
+    giftTimeIcon.setAttribute("style", "color:#6b7a8c;");
 
     var giftTimeText = document.createElement("span");
     giftTimeText.setAttribute("title", giftTime[0]);
@@ -296,7 +275,7 @@ function displayGiftCard(url, source) {
     giftTimeText.innerHTML = " " + giftTime[1];
 
     var giftAuthorText = document.createElement("a");
-    giftAuthorText.href = giftsTopics[url];
+    giftAuthorText.href = giftsTopicsTracker[url];
     giftAuthorText.target = "_blank";
     giftAuthorText.setAttribute("style", "color:#6b7a8c; float:right; text-align:right;");
     giftAuthorText.innerHTML = "Created by: " + giftAuthor;
@@ -306,13 +285,13 @@ function displayGiftCard(url, source) {
     giftInfoDiv.appendChild(giftAuthorText);
 
     // Add card and sort
-    // sortedGiftCards[cardContentDiv] = convertRemainingToInt(giftTime[1]);
     sortedGiftCards.push({node: cardContentDiv, time: convertRemainingToInt(giftTime[1])});
 
     sortedGiftCards.sort(function(a, b) {
         return a.time - b.time;
     });
 
+    // Remove displayed cards and display sorted cards
     giftCardsDiv.innerHTML = "";
 
     for (var i = 0; i < sortedGiftCards.length; i++) {
@@ -321,17 +300,10 @@ function displayGiftCard(url, source) {
 }
 
 //////
-// RUNTIME: Check if collecting process has finished
+// RUNTIME: End collecting process
 //////
-function checkForFinish() {
-    if (Date.now() - lastAddedGiftTime > 15000) {
-        giftsLoadingDiv.setAttribute("style", "display:none;");
-        return;
-    }
-
-    setTimeout(function() { 
-        checkForFinish(); 
-    }, 5000);
+function endCollecting() {
+    giftsLoadingDiv.setAttribute("style", "display:none;");
 }
 
 //////
@@ -362,12 +334,12 @@ function trackGiveawayUrls(source, urlsSource) {
     for (var i = 0; i < extractedUrls.length; i++) {
         var url = extractedUrls[i];
 
-        // Look for image with steam domain and header
+        // Look for giveaway on steamgift that not already tracked
         if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0 && !containsString(giftsTracker, url)) {
             giftsTracker.push(url);
 
             // Add gift source
-            giftsTopics[url] = urlsSource;
+            giftsTopicsTracker[url] = urlsSource;
 
             progressGiftsCount++;
 
@@ -377,15 +349,20 @@ function trackGiveawayUrls(source, urlsSource) {
                     trackGiveawayUrls(source, this.url);
 
                     if (isGiftValid(source)) {
-                        displayGiftCard(this.url, source);
+                        collectedValidGiftsCount++;
+                        headingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + ")";
 
-                        collectedGiftsCount++;
-                        headingTitleDiv.innerHTML = "Valid Gifts (" + collectedGiftsCount + ")";
+                        displayGiftCard(this.url, source);
                     }
 
-                    lastAddedGiftTime = Date.now();
+                    giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + ")";
+                },
+                complete: function () {
+                    collectedGiftsCount++;
 
-                    giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedGiftsCount + "/" + progressGiftsCount + ")";
+                    if (collectedGiftsCount >= progressGiftsCount) {
+                        endCollecting();
+                    }
                 }
             });
         }
@@ -396,7 +373,7 @@ function trackGiveawayUrls(source, urlsSource) {
 // UTIL: Returns if gift is valid
 //////
 function isGiftValid(source) {
-    // TODO: Find better end point
+    // Use the search bar as the end point
     var endPoint = source.indexOf("fa-search");
 
     //
@@ -420,10 +397,11 @@ function isGiftValid(source) {
             return false;
         }
 
+        // Pass Not Enough Points
         return true;
     }
 
-    // Has at least one element for non-public gift
+    // Looks like non-public gift
     if (hasStringBefore(source, "featured__outer-wrap--giveaway", endPoint) && !hasStringBefore(source, "featured__column--whitelist", endPoint) && !hasStringBefore(source, "featured__column--group", endPoint) && !hasStringBefore(source, "featured__column--invite-only", endPoint)) {
         return false;
     }
@@ -443,13 +421,13 @@ function isGiftValid(source) {
         return false;
     }
 
-    // Entry check (There is button to join)
-    if (hasStringBefore(source, "entry_insert", endPoint)) {
+    // Already Entered check
+    if (hasStringBefore(source, "sidebar__entry-insert is-hidden", endPoint)) {
         return true;
     }
 
-    // Already Entered check
-    if (hasStringBefore(source, "sidebar__entry-insert is-hidden", endPoint)) {
+    // Entry check (There is button to join)
+    if (hasStringBefore(source, "entry_insert", endPoint)) {
         return true;
     }
 
@@ -511,7 +489,6 @@ function getGiftEntries(source) {
 function getGiftTime(source) {
     var endTime;
     var remainingTime;
-    var timeLevel; // 1 - seconds, 2 - minutes, 3 - hours, 4 - days, 5 - weeks, 0 - unknown
 
     // Get end point of time data
     var timeEndPoint = source.indexOf("remaining");
@@ -534,23 +511,8 @@ function getGiftTime(source) {
     remainingTime = remainingTime.substring(1, remainingTime.length);
     remainingTime += "remaining";
 
-    // Get time level result
-    if (remainingTime.indexOf("second") > -1) {
-        timeLevel = 1;
-    } else if (remainingTime.indexOf("minute") > -1) {
-        timeLevel = 2;
-    } else if (remainingTime.indexOf("hour") > -1) {
-        timeLevel = 3;
-    } else if (remainingTime.indexOf("day") > -1) {
-        timeLevel = 4;
-    } else if (remainingTime.indexOf("week") > -1) {
-        timeLevel = 5;
-    } else {
-        timeLevel = 0;
-    }
-
     // Return result
-    return [endTime, remainingTime, timeLevel];
+    return [endTime, remainingTime];
 }
 
 //////
