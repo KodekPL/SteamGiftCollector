@@ -1,9 +1,12 @@
 // ==UserScript==
-// @name        Steamgifts Collector 2
+// @name        Steamgifts Collector
+// @description Collects unlisted gifts from SteamGifts.com
 // @author      Kodek
-// @namespace   csgt
+// @namespace   csg
 // @include     *steamgifts.com/discussions*
 // @version     2.0
+// @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
+// @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
 // @grant       none
 // ==/UserScript==
@@ -14,7 +17,9 @@ var scanPagesCount = 1; // How many forum pages to scan?
 var isRunning = false; // Is script in progress
 
 var giftCardsDiv; // Div with all gift cards
-var headingTitleDiv; // Div with valid gifts count
+var invalidGiftCardsDiv; // Div with worth invalid gift cards
+var validHeadingTitleDiv; // Div with valid gifts count
+var invalidHeadingTitleDiv; // Div with invalid gifts count
 var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
 
@@ -30,6 +35,7 @@ var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 var progressGiftsCount = 0; // Hold amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected gifts
 var collectedValidGiftsCount = 0; // Holds amount of collected valid gifts
+var collectedInvalidGiftsCount = 0; // Hold amount of collected invalid gifts
 
 //////
 // RUNTIME: Startup - Add 'Collect Gifts' button to the sidebar
@@ -84,7 +90,7 @@ function prepareGiftCardsContainer() {
     giftsLoadingText.innerHTML = " Scanning for gifts...";
     giftsLoadingText.setAttribute("class", "featured__heading__medium");
     giftsLoadingText.setAttribute("style", "font-size:250%; vertical-align:middle;");
-    giftsLoadingText.setAttribute("title", "Valid/Overall/Progress");
+    giftsLoadingText.setAttribute("title", "Valid/Checked/Overall");
 
     giftsLoadingDiv.appendChild(giftsLoadingIcon);
     giftsLoadingDiv.appendChild(giftsLoadingText);
@@ -95,20 +101,38 @@ function prepareGiftCardsContainer() {
     giftCardsDiv.setAttribute("style", "display:block; text-align:center;");
 
     // Setup heading for valid gifts
-    var headingDiv = document.createElement("div");
-    headingDiv.setAttribute("class", "page__heading");
+    var validHeadingDiv = document.createElement("div");
+    validHeadingDiv.setAttribute("class", "page__heading");
 
-    headingTitleDiv = document.createElement("div");
-    headingTitleDiv.setAttribute("id", "valid_gifts_count");
-    headingTitleDiv.setAttribute("class", "page__heading__breadcrumbs");
-    headingTitleDiv.innerHTML = "Valid Gifts (0)";
+    validHeadingTitleDiv = document.createElement("div");
+    validHeadingTitleDiv.setAttribute("id", "valid_gifts_count");
+    validHeadingTitleDiv.setAttribute("class", "page__heading__breadcrumbs");
+    validHeadingTitleDiv.innerHTML = "Valid Gifts (0)";
 
-    headingDiv.appendChild(headingTitleDiv);
+    validHeadingDiv.appendChild(validHeadingTitleDiv);
+
+    // Setup heading for invalid gifts
+    var invalidHeadingDiv = document.createElement("div");
+    invalidHeadingDiv.setAttribute("class", "page__heading");
+
+    invalidHeadingTitleDiv = document.createElement("div");
+    invalidHeadingTitleDiv.setAttribute("id", "invalid_gifts_count");
+    invalidHeadingTitleDiv.setAttribute("class", "page__heading__breadcrumbs");
+    invalidHeadingTitleDiv.innerHTML = "Invalid Gifts (0)";
+
+    invalidHeadingDiv.appendChild(invalidHeadingTitleDiv);
+
+    // Setup invalid gift cards div
+    invalidGiftCardsDiv = document.createElement("div");
+    invalidGiftCardsDiv.setAttribute("class", "giveaway__columns");
+    invalidGiftCardsDiv.setAttribute("style", "display:block; text-align:center;");
 
     // Apply content
     contentDiv.appendChild(giftsLoadingDiv);
-    contentDiv.appendChild(headingDiv);
+    contentDiv.appendChild(validHeadingDiv);
     contentDiv.appendChild(giftCardsDiv);
+    contentDiv.appendChild(invalidHeadingDiv);
+    contentDiv.appendChild(invalidGiftCardsDiv);
 }
 
 //////
@@ -300,6 +324,58 @@ function displayGiftCard(url, source) {
 }
 
 //////
+// RUNTIME: Display invalid gift card with given source
+//////
+function displayInvalidGiftCard(url, source, reason) {
+    // Extract title from source
+    var titleStartPoint = source.indexOf("table__column__secondary-link");
+    var titleEndPoint = titleStartPoint + 64;
+    var giftGameTitle = source.substring(titleStartPoint, titleEndPoint).split(">")[1].split("<")[0];
+
+    // Create card
+    var cardContentDiv = document.createElement("div");
+    cardContentDiv.setAttribute("class", "giveaway__column");
+    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px;");
+
+    // Add game title to card
+    var gameTitleDiv = document.createElement("div");
+    gameTitleDiv.setAttribute("class", "featured__heading__medium");
+    gameTitleDiv.setAttribute("style", "text-align:center; font-size:16px;");
+
+    var gameTitleUrl = document.createElement("a");
+    gameTitleUrl.href = url;
+    gameTitleUrl.target = "_blank";
+    gameTitleUrl.innerHTML = giftGameTitle;
+
+    gameTitleDiv.appendChild(gameTitleUrl);
+
+    cardContentDiv.appendChild(gameTitleDiv);
+
+    // Add info div for reason
+    var giftInfoDiv = document.createElement("div");
+    giftInfoDiv.setAttribute("class", "featured__column");
+    giftInfoDiv.setAttribute("style", "text-align:center;");
+
+    cardContentDiv.appendChild(giftInfoDiv);
+
+    var giftReasonText = document.createElement("span");
+    giftReasonText.setAttribute("style", "color:#6b7a8c;");
+    giftReasonText.innerHTML = reason;
+
+    giftInfoDiv.appendChild(giftReasonText);
+
+    // Add button to the topic
+    var giftTopicButtonDiv = document.createElement("div");
+    giftTopicButtonDiv.setAttribute("class", "sidebar__action-button");
+    giftTopicButtonDiv.setAttribute("onclick", "window.open(\"" + giftsTopicsTracker[url] + "\", \"_blank\")");
+    giftTopicButtonDiv.innerHTML = "Open Topic";
+
+    cardContentDiv.appendChild(giftTopicButtonDiv);
+
+    invalidGiftCardsDiv.appendChild(cardContentDiv);
+}
+
+//////
 // RUNTIME: End collecting process
 //////
 function endCollecting() {
@@ -350,9 +426,18 @@ function trackGiveawayUrls(source, urlsSource) {
 
                     if (isGiftValid(source)) {
                         collectedValidGiftsCount++;
-                        headingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + ")";
+                        validHeadingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + ")";
 
                         displayGiftCard(this.url, source);
+                    } else {
+                        collectedInvalidGiftsCount++;
+                        invalidHeadingTitleDiv.innerHTML = "Invalid Gifts (" + collectedInvalidGiftsCount + ")";
+
+                        var invalidGiftReason = getInvalidGiftReason(source);
+
+                        if (invalidGiftReason !== null) {
+                            displayInvalidGiftCard(this.url, source, invalidGiftReason);
+                        }
                     }
 
                     giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + ")";
@@ -416,11 +501,6 @@ function isGiftValid(source) {
         return false;
     }
 
-    // Whitelist check
-    if (hasStringBefore(source, "featured__column--whitelist", endPoint)) {
-        return false;
-    }
-
     // Already Entered check
     if (hasStringBefore(source, "sidebar__entry-insert is-hidden", endPoint)) {
         return true;
@@ -431,7 +511,24 @@ function isGiftValid(source) {
         return true;
     }
 
+    // Whitelist check
+    if (hasStringBefore(source, "featured__column--whitelist", endPoint)) {
+        return false;
+    }
+
     return false;
+}
+
+//////
+// UTIL: Returns worth lookup invalid gift reason
+//////
+function getInvalidGiftReason(source) {
+    // No Permission - Steam Group
+    if (source.indexOf("You do not have permission") > -1 && source.indexOf("Steam group") > -1) {
+        return "No Permission (Steam Group)";
+    }
+
+    return null;
 }
 
 //////
