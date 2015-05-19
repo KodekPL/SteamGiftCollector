@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.0.2
+// @version     2.0.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -249,7 +249,7 @@ function displayGiftCard(url, source) {
     // Create card
     var cardContentDiv = document.createElement("div");
     cardContentDiv.setAttribute("class", "giveaway__column");
-    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#ddc0c0,#f0f2f5);" : ""));
+    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#B9D393,#F0F2F5);" : ""));
 
     // Add game image to card
     var gameImageDiv = document.createElement("div");
@@ -291,17 +291,17 @@ function displayGiftCard(url, source) {
     // Add time to info div
     var giftTimeIcon = document.createElement("i");
     giftTimeIcon.setAttribute("class", "fa fa-clock-o");
-    giftTimeIcon.setAttribute("style", "color:#6b7a8c;");
+    giftTimeIcon.setAttribute("style", "color:#6B7A8C;");
 
     var giftTimeText = document.createElement("span");
     giftTimeText.setAttribute("title", giftTime[0]);
-    giftTimeText.setAttribute("style", "color:#6b7a8c;");
+    giftTimeText.setAttribute("style", "color:#6B7A8C;");
     giftTimeText.innerHTML = " " + giftTime[1];
 
     var giftAuthorText = document.createElement("a");
     giftAuthorText.href = giftsTopicsTracker[url];
     giftAuthorText.target = "_blank";
-    giftAuthorText.setAttribute("style", "color:#6b7a8c; float:right; text-align:right;");
+    giftAuthorText.setAttribute("style", "color:#6B7A8C; float:right; text-align:right;");
     giftAuthorText.innerHTML = "Created by: " + giftAuthor;
 
     giftInfoDiv.appendChild(giftTimeIcon);
@@ -359,7 +359,7 @@ function displayInvalidGiftCard(url, source, reason) {
     cardContentDiv.appendChild(giftInfoDiv);
 
     var giftReasonText = document.createElement("span");
-    giftReasonText.setAttribute("style", "color:#6b7a8c;");
+    giftReasonText.setAttribute("style", "color:#6B7A8C;");
     giftReasonText.innerHTML = reason;
 
     giftInfoDiv.appendChild(giftReasonText);
