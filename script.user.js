@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.0.1
+// @version     2.0.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -249,7 +249,7 @@ function displayGiftCard(url, source) {
     // Create card
     var cardContentDiv = document.createElement("div");
     cardContentDiv.setAttribute("class", "giveaway__column");
-    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4;" : ""));
+    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#ddc0c0,#f0f2f5);" : ""));
 
     // Add game image to card
     var gameImageDiv = document.createElement("div");
