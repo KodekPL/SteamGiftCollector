@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.0
+// @version     2.0.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 // Settings
-var scanPagesCount = 1; // How many forum pages to scan?
+var scanPagesCount = 4; // How many forum pages to scan?
 
 var isRunning = false; // Is script in progress
 
