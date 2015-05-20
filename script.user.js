@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.0.3
+// @version     2.0.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -72,6 +72,9 @@ function startCollecting() {
 // RUNTIME: Prepares inner div to contain gift cards
 //////
 function prepareGiftCardsContainer() {
+    // Set title
+    document.title = "Collecting gifts...";
+
     // Remove default website code
     document.getElementsByClassName("page__inner-wrap")[0].remove();
 
@@ -379,7 +382,11 @@ function displayInvalidGiftCard(url, source, reason) {
 // RUNTIME: End collecting process
 //////
 function endCollecting() {
+    // Hide progress info
     giftsLoadingDiv.setAttribute("style", "display:none;");
+
+    // Set title
+    document.title = "Collecting complete!";
 }
 
 //////
