@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.0.4
+// @version     2.0.5
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -253,6 +253,36 @@ function displayGiftCard(url, source) {
     var cardContentDiv = document.createElement("div");
     cardContentDiv.setAttribute("class", "giveaway__column");
     cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#B9D393,#F0F2F5);" : ""));
+
+    // Invite only icon
+    if (source.indexOf("featured__column--invite-only") > -1) {
+        var inviteOnlyDiv = document.createElement("div");
+        inviteOnlyDiv.setAttribute("title", "Invite Only");
+        inviteOnlyDiv.setAttribute("class", "featured__column featured__column--invite-only");
+        inviteOnlyDiv.setAttribute("style", "position:absolute; margin:7px 7px;");
+
+        var inviteOnlyIcon = document.createElement("i");
+        inviteOnlyIcon.setAttribute("class", "fa fa-fw fa-lock");
+
+        inviteOnlyDiv.appendChild(inviteOnlyIcon);
+
+        cardContentDiv.appendChild(inviteOnlyDiv);
+    }
+
+    // Steam group icon
+    if (source.indexOf("featured__column--group") > -1) {
+        var steamGroupDiv = document.createElement("div");
+        steamGroupDiv.setAttribute("title", "Steam Group");
+        steamGroupDiv.setAttribute("class", "featured__column featured__column--group");
+        steamGroupDiv.setAttribute("style", "position:absolute; margin:7px 7px;");
+
+        var steamGroupIcon = document.createElement("i");
+        steamGroupIcon.setAttribute("class", "fa fa-fw fa-user");
+
+        steamGroupDiv.appendChild(steamGroupIcon);
+
+        cardContentDiv.appendChild(steamGroupDiv);
+    }
 
     // Add game image to card
     var gameImageDiv = document.createElement("div");
