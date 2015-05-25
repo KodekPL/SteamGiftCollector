@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.0.5
+// @version     2.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -15,6 +15,7 @@
 var scanPagesCount = 4; // How many forum pages to scan?
 
 var isRunning = false; // Is script in progress
+var isRefreshing = false; // Is script refresing collected gifts?
 
 var giftCardsDiv; // Div with all gift cards
 var invalidGiftCardsDiv; // Div with worth invalid gift cards
@@ -22,12 +23,14 @@ var validHeadingTitleDiv; // Div with valid gifts count
 var invalidHeadingTitleDiv; // Div with invalid gifts count
 var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
+var giftsRefreshButton; // Div with refresh button
 
 var forumPagesTrackerCount = 0; // Holds amount of checked forum pages
 var topicsPagesTracker = []; // Holds all collected topics pages
 var topicsPagesTrackerCount = 0; // Holds amount of checked topic pages
 var topicsTracker = []; // Holds all collected topic urls
 var giftsTracker = []; // Holds all collected gifts
+var validGiftsTracker = []; // Holds all collected valid gifts
 var giftsTopicsTracker = {}; // Holds gift link and topic it came from
 
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
@@ -69,6 +72,20 @@ function startCollecting() {
 }
 
 //////
+// RUNTIME: End collecting process
+//////
+function endCollecting() {
+    // Hide progress info
+    giftsLoadingDiv.setAttribute("style", "display:none;");
+
+    // Show refresh button
+    giftsRefreshButton.setAttribute("style", "");
+
+    // Set title
+    document.title = "Collecting complete!";
+}
+
+//////
 // RUNTIME: Prepares inner div to contain gift cards
 //////
 function prepareGiftCardsContainer() {
@@ -107,12 +124,24 @@ function prepareGiftCardsContainer() {
     var validHeadingDiv = document.createElement("div");
     validHeadingDiv.setAttribute("class", "page__heading");
 
+    // Valid Heading Title
     validHeadingTitleDiv = document.createElement("div");
     validHeadingTitleDiv.setAttribute("id", "valid_gifts_count");
     validHeadingTitleDiv.setAttribute("class", "page__heading__breadcrumbs");
     validHeadingTitleDiv.innerHTML = "Valid Gifts (0)";
 
+    // Gifts Refresh Button
+    giftsRefreshButton = document.createElement("div");
+    giftsRefreshButton.setAttribute("id", "gifts_refresh");
+    giftsRefreshButton.setAttribute("class", "featured__action-button");
+    giftsRefreshButton.setAttribute("style", "display:none;");
+    giftsRefreshButton.innerHTML = "Refresh";
+    giftsRefreshButton.onclick = function() {
+        refreshCollection();
+    };
+
     validHeadingDiv.appendChild(validHeadingTitleDiv);
+    validHeadingDiv.appendChild(giftsRefreshButton);
 
     // Setup heading for invalid gifts
     var invalidHeadingDiv = document.createElement("div");
@@ -143,6 +172,9 @@ function prepareGiftCardsContainer() {
 //////
 function asyncCollectTopics() {
     console.log("Scanning pages for topics...");
+
+    // Reset count tracker before starting
+    forumPagesTrackerCount = 0;
 
     for (var i = 1; i <= scanPagesCount; i++) {
         $.ajax({
@@ -177,6 +209,9 @@ function asyncCollectTopics() {
 function asyncScanForTopicPages() {
     console.log("Scanned " + scanPagesCount + " pages and found " + topicsTracker.length + " topics.");
     console.log("Scanning for topics pages...");
+
+    // Reset tracker count before starting
+    topicsPagesTrackerCount = 0;
 
     for (var i = 0; i < topicsTracker.length; i++) {
         $.ajax({
@@ -409,33 +444,64 @@ function displayInvalidGiftCard(url, source, reason) {
 }
 
 //////
-// RUNTIME: End collecting process
+// RUNTIME: Refresh collected gifts and collect again
 //////
-function endCollecting() {
+function refreshCollection() {
+    if (isRefreshing) {
+        return;
+    }
+
+    isRefreshing = true;
+
+    // Copy tracked gifts without valid gifts
+    var copyGiftsTracker = [];
+
+    for(var i = 0; i < giftsTracker.length; i++) {
+        if (!containsString(validGiftsTracker, giftsTracker[i])) {
+            copyGiftsTracker.push(giftsTracker[i]);
+        }
+    }
+
+    // Replace tracked gifts with array without valid gifts
+    giftsTracker = copyGiftsTracker;
+
+    // Reset collecting variables
+    sortedGiftCards = new Array();
+    progressGiftsCount = 0;
+    collectedGiftsCount = 0;
+    collectedValidGiftsCount = 0;
+
+    // Start collecting again
+    asyncCollectTopics();
+
+    // Set title
+    document.title = "Refreshing gifts...";
+
+    // Change refresh button
+    giftsRefreshButton.setAttribute("class", "featured__action");
+    giftsRefreshButton.innerHTML = "<i class=\"fa fa-refresh fa-spin\"></i>";
+
+    // Show progress info
+    giftsLoadingDiv.setAttribute("style", "width:100%; text-align:center; display:block; margin-left:auto; margin-right:auto; padding:5px;");
+    giftsLoadingText.innerHTML = " Refreshing gifts...";
+    giftsLoadingText.setAttribute("title", "Valid/Last Valid");
+}
+
+//////
+// RUNTIME: End refresing process
+//////
+function endRefresh() {
+    isRefreshing = false;
+
+    // Reset refresh button
+    giftsRefreshButton.setAttribute("class", "featured__action-button");
+    giftsRefreshButton.innerHTML = "Refresh";
+
     // Hide progress info
     giftsLoadingDiv.setAttribute("style", "display:none;");
 
     // Set title
     document.title = "Collecting complete!";
-}
-
-//////
-// UTIL: Convert remaning time to integer seconds
-//////
-function convertRemainingToInt(stringTime) {
-    var value = parseInt(stringTime.split(" ")[0]);
-
-    if (stringTime.indexOf("week") > -1) {
-        return value * 7 * 24 * 60 * 60;
-    } else if (stringTime.indexOf("day") > -1) {
-        return value * 24 * 60 * 60;
-    } else if (stringTime.indexOf("hour") > -1) {
-        return value * 60 * 60;
-    } else if (stringTime.indexOf("minute") > -1) {
-        return value * 60;
-    } else {
-        return 0;
-    }
 }
 
 //////
@@ -465,6 +531,10 @@ function trackGiveawayUrls(source, urlsSource) {
                         collectedValidGiftsCount++;
                         validHeadingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + ")";
 
+                        if (!containsString(validGiftsTracker, this.url)) {
+                            validGiftsTracker.push(this.url);
+                        }
+
                         displayGiftCard(this.url, source);
                     } else {
                         collectedInvalidGiftsCount++;
@@ -477,13 +547,21 @@ function trackGiveawayUrls(source, urlsSource) {
                         }
                     }
 
-                    giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + ")";
+                    if (!isRefreshing) {
+                        giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + ")";
+                    } else {
+                        giftsLoadingText.innerHTML = " Refreshing gifts... (" + collectedValidGiftsCount + "/" + validGiftsTracker.length + ")";
+                    }
                 },
                 complete: function () {
                     collectedGiftsCount++;
 
                     if (collectedGiftsCount >= progressGiftsCount) {
-                        endCollecting();
+                        if (!isRefreshing) {
+                            endCollecting();
+                        } else {
+                            endRefresh();
+                        }
                     }
                 }
             });
@@ -501,6 +579,11 @@ function isGiftValid(source) {
     //
     // Requirements Checks
     //
+
+    // Looks like non-public gift
+    if (hasStringBefore(source, "featured__outer-wrap--giveaway", endPoint) && !hasStringBefore(source, "featured__column--whitelist", endPoint) && !hasStringBefore(source, "featured__column--group", endPoint) && !hasStringBefore(source, "featured__column--invite-only", endPoint)) {
+        return false;
+    }
 
     // Error Entry Button check
     if (hasStringBefore(source, "sidebar__error", endPoint)) {
@@ -521,11 +604,6 @@ function isGiftValid(source) {
 
         // Pass Not Enough Points
         return true;
-    }
-
-    // Looks like non-public gift
-    if (hasStringBefore(source, "featured__outer-wrap--giveaway", endPoint) && !hasStringBefore(source, "featured__column--whitelist", endPoint) && !hasStringBefore(source, "featured__column--group", endPoint) && !hasStringBefore(source, "featured__column--invite-only", endPoint)) {
-        return false;
     }
 
     // Ended check
@@ -647,6 +725,25 @@ function getGiftTime(source) {
 
     // Return result
     return [endTime, remainingTime];
+}
+
+//////
+// UTIL: Convert remaning time to integer seconds
+//////
+function convertRemainingToInt(stringTime) {
+    var value = parseInt(stringTime.split(" ")[0]);
+
+    if (stringTime.indexOf("week") > -1) {
+        return value * 7 * 24 * 60 * 60;
+    } else if (stringTime.indexOf("day") > -1) {
+        return value * 24 * 60 * 60;
+    } else if (stringTime.indexOf("hour") > -1) {
+        return value * 60 * 60;
+    } else if (stringTime.indexOf("minute") > -1) {
+        return value * 60;
+    } else {
+        return 0;
+    }
 }
 
 //////
