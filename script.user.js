@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.1
+// @version     2.1.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -279,6 +279,11 @@ function displayGiftCard(url, source) {
     var giftAuthorAvatar = getGiftAuthorAvatar(source);
     var hasJoined = hasJoinedGift(source);
 
+    // Get gift sort data
+    var sortValue = 0;
+    sortValue += convertRemainingToInt(giftTime[1]);
+    sortValue += giftGameTitle.charCodeAt(0);
+
     // Prepare gift data
     if(giftGameTitle.length > 20) {
         giftGameTitle = giftGameTitle.substring(0, 20) + "...";
@@ -377,10 +382,10 @@ function displayGiftCard(url, source) {
     giftInfoDiv.appendChild(giftAuthorText);
 
     // Add card and sort
-    sortedGiftCards.push({node: cardContentDiv, time: convertRemainingToInt(giftTime[1])});
+    sortedGiftCards.push({node: cardContentDiv, sort: sortValue});
 
     sortedGiftCards.sort(function(a, b) {
-        return a.time - b.time;
+        return a.sort - b.sort;
     });
 
     // Remove displayed cards and display sorted cards
