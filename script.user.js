@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.1.1
+// @version     2.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -24,6 +24,7 @@ var invalidHeadingTitleDiv; // Div with invalid gifts count
 var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
 var giftsRefreshButton; // Div with refresh button
+var giftsDisplayButton; // Div with gifts display button
 
 var forumPagesTrackerCount = 0; // Holds amount of checked forum pages
 var topicsPagesTracker = []; // Holds all collected topics pages
@@ -34,6 +35,8 @@ var validGiftsTracker = []; // Holds all collected valid gifts
 var giftsTopicsTracker = {}; // Holds gift link and topic it came from
 
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
+
+var displayMode = 0; // Hold the active display mode for gifts
 
 var progressGiftsCount = 0; // Hold amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected gifts
@@ -123,6 +126,7 @@ function prepareGiftCardsContainer() {
     // Setup heading for valid gifts
     var validHeadingDiv = document.createElement("div");
     validHeadingDiv.setAttribute("class", "page__heading");
+    validHeadingDiv.setAttribute("style", "margin:0px 32px;");
 
     // Valid Heading Title
     validHeadingTitleDiv = document.createElement("div");
@@ -140,12 +144,23 @@ function prepareGiftCardsContainer() {
         refreshCollection();
     };
 
+    // Gifts Display Button
+    giftsDisplayButton = document.createElement("div");
+    giftsDisplayButton.setAttribute("id", "gifts_display_switch");
+    giftsDisplayButton.setAttribute("class", "featured__action-button");
+    giftsDisplayButton.innerHTML = "All";
+    giftsDisplayButton.onclick = function() {
+        switchDisplayCollection();
+    };
+
     validHeadingDiv.appendChild(validHeadingTitleDiv);
+    validHeadingDiv.appendChild(giftsDisplayButton);
     validHeadingDiv.appendChild(giftsRefreshButton);
 
     // Setup heading for invalid gifts
     var invalidHeadingDiv = document.createElement("div");
     invalidHeadingDiv.setAttribute("class", "page__heading");
+    invalidHeadingDiv.setAttribute("style", "margin:0px 32px;");
 
     invalidHeadingTitleDiv = document.createElement("div");
     invalidHeadingTitleDiv.setAttribute("id", "invalid_gifts_count");
@@ -272,6 +287,7 @@ function asyncScanTopicsForGifts() {
 function displayGiftCard(url, source) {
     // Get gift data
     var giftGameTitle = getGiftGameTitle(source);
+    var giftType = getGiftType(source);
     var giftGameImage = getGiftGameImage(source);
     var giftEntries = getGiftEntries(source);
     var giftTime = getGiftTime(source);
@@ -295,7 +311,7 @@ function displayGiftCard(url, source) {
     cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#B9D393,#F0F2F5);" : ""));
 
     // Invite only icon
-    if (source.indexOf("featured__column--invite-only") > -1) {
+    if (giftType == 1) {
         var inviteOnlyDiv = document.createElement("div");
         inviteOnlyDiv.setAttribute("title", "Invite Only");
         inviteOnlyDiv.setAttribute("class", "featured__column featured__column--invite-only");
@@ -310,7 +326,7 @@ function displayGiftCard(url, source) {
     }
 
     // Steam group icon
-    if (source.indexOf("featured__column--group") > -1) {
+    if (giftType == 2) {
         var steamGroupDiv = document.createElement("div");
         steamGroupDiv.setAttribute("title", "Steam Group");
         steamGroupDiv.setAttribute("class", "featured__column featured__column--group");
@@ -394,6 +410,8 @@ function displayGiftCard(url, source) {
     for (var i = 0; i < sortedGiftCards.length; i++) {
         giftCardsDiv.appendChild(sortedGiftCards[i]["node"]);
     }
+
+    updateDisplayCollection();
 }
 
 //////
@@ -446,6 +464,53 @@ function displayInvalidGiftCard(url, source, reason) {
     cardContentDiv.appendChild(giftTopicButtonDiv);
 
     invalidGiftCardsDiv.appendChild(cardContentDiv);
+}
+
+//////
+// RUNTIME: Switch display mode for collected gifts
+//////
+function switchDisplayCollection() {
+    displayMode++;
+
+    if (displayMode > 2) {
+        displayMode = 0;
+    }
+
+    updateDisplayCollection();
+}
+
+//////
+// RUNTIME: Display collected gifts in a different way
+//////
+function updateDisplayCollection() {
+    if (displayMode == 0) { // Display All Mode
+        giftsDisplayButton.innerHTML = "All";
+    } else if (displayMode == 1) { // Display Invite Only Mode
+        giftsDisplayButton.innerHTML = "Invite Only";
+    } else if (displayMode == 2) { // Display Group Only Mode
+        giftsDisplayButton.innerHTML = "Group Only";
+    }
+
+    for (var i = 0; i < sortedGiftCards.length; i++) {
+        var cardDiv = sortedGiftCards[i]["node"];
+        var giftType = getGiftType(cardDiv.innerHTML);
+
+        if (displayMode == 0) { // Display All Mode
+            cardDiv.setAttribute("class", "giveaway__column");
+        } else if (displayMode == 1) { // Display Invite Only Mode
+            if (giftType == 1) {
+                cardDiv.setAttribute("class", "giveaway__column");
+            } else {
+                cardDiv.setAttribute("class", "giveaway__column is-hidden");
+            }
+        } else if (displayMode == 2) { // Display Group Only Mode
+            if (giftType == 2) {
+                cardDiv.setAttribute("class", "giveaway__column");
+            } else {
+                cardDiv.setAttribute("class", "giveaway__column is-hidden");
+            }
+        }
+    }
 }
 
 //////
@@ -678,6 +743,24 @@ function getGiftGameTitle(source) {
     var titleEndPoint = source.indexOf("</title>");
 
     return source.substring(titleStartPoint + 7, titleEndPoint);
+}
+
+//////
+// UTIL: Returns gift type from given source
+//////
+function getGiftType(source) {
+    // Invite only type
+    if (source.indexOf("featured__column--invite-only") > -1) {
+        return 1;
+    }
+
+    // Steam group type
+    if (source.indexOf("featured__column--group") > -1) {
+        return 2;
+    }
+
+    // Unknown type
+    return 0;
 }
 
 //////
