@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.2
+// @version     2.2.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -79,10 +79,13 @@ function startCollecting() {
 //////
 function endCollecting() {
     // Hide progress info
-    giftsLoadingDiv.setAttribute("style", "display:none;");
+    giftsLoadingDiv.setAttribute("class", "is-hidden");
 
     // Show refresh button
-    giftsRefreshButton.setAttribute("style", "");
+    giftsRefreshButton.setAttribute("class", "featured__action-button");
+
+    // Show display mode button
+    giftsDisplayButton.setAttribute("class", "featured__action-button");
 
     // Set title
     document.title = "Collecting complete!";
@@ -137,8 +140,7 @@ function prepareGiftCardsContainer() {
     // Gifts Refresh Button
     giftsRefreshButton = document.createElement("div");
     giftsRefreshButton.setAttribute("id", "gifts_refresh");
-    giftsRefreshButton.setAttribute("class", "featured__action-button");
-    giftsRefreshButton.setAttribute("style", "display:none;");
+    giftsRefreshButton.setAttribute("class", "featured__action-button is-hidden");
     giftsRefreshButton.innerHTML = "Refresh";
     giftsRefreshButton.onclick = function() {
         refreshCollection();
@@ -147,7 +149,7 @@ function prepareGiftCardsContainer() {
     // Gifts Display Button
     giftsDisplayButton = document.createElement("div");
     giftsDisplayButton.setAttribute("id", "gifts_display_switch");
-    giftsDisplayButton.setAttribute("class", "featured__action-button");
+    giftsDisplayButton.setAttribute("class", "featured__action-button is-hidden");
     giftsDisplayButton.innerHTML = "All";
     giftsDisplayButton.onclick = function() {
         switchDisplayCollection();
@@ -228,6 +230,9 @@ function asyncScanForTopicPages() {
     // Reset tracker count before starting
     topicsPagesTrackerCount = 0;
 
+    // Reverse order of added topics to start iteration with new ones
+    topicsTracker.reverse();
+
     for (var i = 0; i < topicsTracker.length; i++) {
         $.ajax({
             url : topicsTracker[i],
@@ -270,6 +275,9 @@ function asyncScanForTopicPages() {
 function asyncScanTopicsForGifts() {
     console.log("Scanned " + topicsPagesTracker.length + " topics pages...");
     console.log("Scanning for gifts...");
+
+    // Reverse order of added topics pages to start iteration with new ones
+    topicsPagesTracker.reverse();
 
     for (var i = 0; i < topicsPagesTracker.length; i++) {
         $.ajax({
@@ -552,7 +560,7 @@ function refreshCollection() {
     giftsRefreshButton.innerHTML = "<i class=\"fa fa-refresh fa-spin\"></i>";
 
     // Show progress info
-    giftsLoadingDiv.setAttribute("style", "width:100%; text-align:center; display:block; margin-left:auto; margin-right:auto; padding:5px;");
+    giftsLoadingDiv.setAttribute("class", "");
     giftsLoadingText.innerHTML = " Refreshing gifts...";
     giftsLoadingText.setAttribute("title", "Valid/Last Valid");
 }
@@ -568,7 +576,7 @@ function endRefresh() {
     giftsRefreshButton.innerHTML = "Refresh";
 
     // Hide progress info
-    giftsLoadingDiv.setAttribute("style", "display:none;");
+    giftsLoadingDiv.setAttribute("class", "is-hidden");
 
     // Set title
     document.title = "Collecting complete!";
