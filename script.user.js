@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.2.1
+// @version     2.2.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -52,6 +52,12 @@ $(document).ready(function() {
     var startButton = document.createElement("div");
     startButton.setAttribute("class", "sidebar__action-button");
     startButton.innerHTML = "Collect Gifts";
+
+    var versionInfoText = document.createElement("span");
+    versionInfoText.setAttribute("class", "sidebar__entry__points");
+    versionInfoText.innerHTML = "(" + GM_info.script.version + ")";
+
+    startButton.appendChild(versionInfoText);
 
     sidebarDiv.appendChild(startButton);
 
