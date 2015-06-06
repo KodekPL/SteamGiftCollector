@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.4.1
+// @version     2.4.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -116,7 +116,6 @@ function startCollecting() {
     isRunning = true;
 
     prepareGiftCardsContainer();
-    trackManualRoster();
     asyncCollectTopics();
 }
 
@@ -333,6 +332,8 @@ function asyncScanTopicsForGifts() {
             }
         });
     }
+
+    trackManualRoster();
 }
 
 //////
@@ -381,10 +382,12 @@ function displayGiftCard(url, source) {
 
     // Steam group icon
     if (giftType == 2) {
+        var groupNames = getGiftGroups(source);
+
         var steamGroupDiv = document.createElement("div");
-        steamGroupDiv.setAttribute("title", "Steam Group");
         steamGroupDiv.setAttribute("class", "featured__column featured__column--group");
         steamGroupDiv.setAttribute("style", "position:absolute; margin:7px 7px;");
+        steamGroupDiv.setAttribute("title", groupNames);
 
         var steamGroupIcon = document.createElement("i");
         steamGroupIcon.setAttribute("class", "fa fa-fw fa-user");
@@ -618,7 +621,6 @@ function refreshCollection() {
     collectedValidGiftsCount = 0;
 
     // Start collecting again
-    trackManualRoster();
     asyncCollectTopics();
 
     // Set title
@@ -956,6 +958,22 @@ function getGiftAuthorAvatar(source) {
             }
         }
     }
+}
+
+//////
+// UTIL: Returns gift groups from given source
+//////
+function getGiftGroups(source) {
+    // Get start point of author data
+    var groupStartPoint = source.indexOf("featured__column featured__column--group") + 49;
+
+    // Get end point of author data
+    var groupEndPoint = groupStartPoint + 69;
+
+    // Cut substring with quotes characters
+    var splitGroupString = source.substring(groupStartPoint, groupEndPoint).split("\"");
+
+    return splitGroupString[0];
 }
 
 //////
