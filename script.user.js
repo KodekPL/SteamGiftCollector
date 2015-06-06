@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.2.2
+// @version     2.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -33,10 +33,12 @@ var topicsTracker = []; // Holds all collected topic urls
 var giftsTracker = []; // Holds all collected gifts
 var validGiftsTracker = []; // Holds all collected valid gifts
 var giftsTopicsTracker = {}; // Holds gift link and topic it came from
+var topicsTitlesTracker = {}; // Holds topic title and link it came from
 
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 
 var displayMode = 0; // Hold the active display mode for gifts
+var displayGiftsCount = 0; // Hold amount of gifts that are being displayed
 
 var progressGiftsCount = 0; // Hold amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected gifts
@@ -422,7 +424,7 @@ function displayGiftCard(url, source) {
     giftCardsDiv.innerHTML = "";
 
     for (var i = 0; i < sortedGiftCards.length; i++) {
-        giftCardsDiv.appendChild(sortedGiftCards[i]["node"]);
+        giftCardsDiv.appendChild(sortedGiftCards[i]['node']);
     }
 
     updateDisplayCollection();
@@ -432,10 +434,12 @@ function displayGiftCard(url, source) {
 // RUNTIME: Display invalid gift card with given source
 //////
 function displayInvalidGiftCard(url, source, reason) {
-    // Extract title from source
-    var titleStartPoint = source.indexOf("table__column__secondary-link");
-    var titleEndPoint = titleStartPoint + 64;
-    var giftGameTitle = source.substring(titleStartPoint, titleEndPoint).split(">")[1].split("<")[0];
+    // Extract game title from source
+    var gameTitleStartPoint = source.indexOf("table__column__secondary-link");
+    var gameTitleEndPoint = gameTitleStartPoint + 64;
+    var giftGameTitle = source.substring(gameTitleStartPoint, gameTitleEndPoint).split(">")[1].split("<")[0];
+
+    var topicTitle = topicsTitlesTracker[giftsTopicsTracker[url]];
 
     // Create card
     var cardContentDiv = document.createElement("div");
@@ -473,7 +477,16 @@ function displayInvalidGiftCard(url, source, reason) {
     var giftTopicButtonDiv = document.createElement("div");
     giftTopicButtonDiv.setAttribute("class", "sidebar__action-button");
     giftTopicButtonDiv.setAttribute("onclick", "window.open(\"" + giftsTopicsTracker[url] + "\", \"_blank\")");
-    giftTopicButtonDiv.innerHTML = "Open Topic";
+    if (!topicTitle) {
+        giftTopicButtonDiv.innerHTML = "Open source";
+    } else {
+        // Cut topic title if too long
+        if (topicTitle.length > 23) {
+            topicTitle = topicTitle.substring(0, 23) + "...";
+        }
+
+        giftTopicButtonDiv.innerHTML = topicTitle;
+    }
 
     cardContentDiv.appendChild(giftTopicButtonDiv);
 
@@ -497,7 +510,7 @@ function switchDisplayCollection() {
 // RUNTIME: Display collected gifts in a different way
 //////
 function updateDisplayCollection() {
-    if (displayMode == 0) { // Display All Mode
+    if (displayMode === 0) { // Display All Mode
         giftsDisplayButton.innerHTML = "All";
     } else if (displayMode == 1) { // Display Invite Only Mode
         giftsDisplayButton.innerHTML = "Invite Only";
@@ -505,26 +518,37 @@ function updateDisplayCollection() {
         giftsDisplayButton.innerHTML = "Group Only";
     }
 
+    // Reset display gifts count
+    displayGiftsCount = 0;
+
     for (var i = 0; i < sortedGiftCards.length; i++) {
-        var cardDiv = sortedGiftCards[i]["node"];
+        var cardDiv = sortedGiftCards[i]['node'];
         var giftType = getGiftType(cardDiv.innerHTML);
 
-        if (displayMode == 0) { // Display All Mode
+        if (displayMode === 0) { // Display All Mode
             cardDiv.setAttribute("class", "giveaway__column");
+
+            displayGiftsCount++;
         } else if (displayMode == 1) { // Display Invite Only Mode
             if (giftType == 1) {
                 cardDiv.setAttribute("class", "giveaway__column");
+
+                displayGiftsCount++;
             } else {
                 cardDiv.setAttribute("class", "giveaway__column is-hidden");
             }
         } else if (displayMode == 2) { // Display Group Only Mode
             if (giftType == 2) {
                 cardDiv.setAttribute("class", "giveaway__column");
+
+                displayGiftsCount++;
             } else {
                 cardDiv.setAttribute("class", "giveaway__column is-hidden");
             }
         }
     }
+
+    validHeadingTitleDiv.innerHTML = "Valid Gifts (" + displayGiftsCount + "/" + collectedValidGiftsCount + ")";
 }
 
 //////
@@ -604,6 +628,15 @@ function trackGiveawayUrls(source, urlsSource) {
             // Add gift source
             giftsTopicsTracker[url] = urlsSource;
 
+            // Add topic title (if is topic) - extract topic title from source
+            if (urlsSource.indexOf("/discussion/") >= 0) {
+                var topicTitleStartPoint = source.indexOf("<title>") + 7;
+                var topicTitleEndPoint = source.indexOf("</title>");
+                var topicTitle = source.substring(topicTitleStartPoint, topicTitleEndPoint);
+
+                topicsTitlesTracker[urlsSource] = topicTitle;
+            }
+
             progressGiftsCount++;
 
             $.ajax({
@@ -613,7 +646,7 @@ function trackGiveawayUrls(source, urlsSource) {
 
                     if (isGiftValid(source)) {
                         collectedValidGiftsCount++;
-                        validHeadingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + ")";
+                        validHeadingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + "/" + collectedValidGiftsCount + ")";
 
                         if (!containsString(validGiftsTracker, this.url)) {
                             validGiftsTracker.push(this.url);
