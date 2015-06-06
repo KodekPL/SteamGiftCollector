@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.4
+// @version     2.4.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -94,7 +94,7 @@ function loadManualRoster() {
     var storage = localStorage.manualRoster;
 
     if (storage) {
-        manualRosterBox.value = localStorage.manualRoster;
+        manualRosterBox.value = storage;
     }
 }
 
