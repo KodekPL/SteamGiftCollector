@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.3
+// @version     2.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -25,6 +25,7 @@ var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
 var giftsRefreshButton; // Div with refresh button
 var giftsDisplayButton; // Div with gifts display button
+var manualRosterBox; // Text area with manual roster links
 
 var forumPagesTrackerCount = 0; // Holds amount of checked forum pages
 var topicsPagesTracker = []; // Holds all collected topics pages
@@ -51,6 +52,7 @@ var collectedInvalidGiftsCount = 0; // Hold amount of collected invalid gifts
 $(document).ready(function() {
     var sidebarDiv = document.getElementsByClassName("sidebar")[0];
 
+    // Start button
     var startButton = document.createElement("div");
     startButton.setAttribute("class", "sidebar__action-button");
     startButton.innerHTML = "Collect Gifts";
@@ -61,12 +63,47 @@ $(document).ready(function() {
 
     startButton.appendChild(versionInfoText);
 
-    sidebarDiv.appendChild(startButton);
-
     startButton.onclick = function() {
+        saveManualRoster();
         startCollecting();
     };
+
+    // Manual Roster Box
+    manualRosterBox = document.createElement("textarea");
+    manualRosterBox.setAttribute("name", "manual-roster");
+    manualRosterBox.setAttribute("style", "overflow: hidden; word-wrap: break-word; height: 100px;");
+    manualRosterBox.setAttribute("title", "Manual Roster");
+
+    loadManualRoster();
+
+    sidebarDiv.appendChild(startButton);
+    sidebarDiv.appendChild(manualRosterBox);
 });
+
+//////
+// RUNTIME: Save manual roster
+//////
+function saveManualRoster() {
+    localStorage.manualRoster = manualRosterBox.value;
+}
+
+//////
+// RUNTIME: Load manual roster
+//////
+function loadManualRoster() {
+    var storage = localStorage.manualRoster;
+
+    if (storage) {
+        manualRosterBox.value = localStorage.manualRoster;
+    }
+}
+
+//////
+// RUNTIME: Track manual roster
+//////
+function trackManualRoster() {
+    trackGiveawayUrls(localStorage.manualRoster, "http://www.steamgifts.com/");
+}
 
 //////
 // RUNTIME: Start collecting process
@@ -79,6 +116,7 @@ function startCollecting() {
     isRunning = true;
 
     prepareGiftCardsContainer();
+    trackManualRoster();
     asyncCollectTopics();
 }
 
@@ -580,6 +618,7 @@ function refreshCollection() {
     collectedValidGiftsCount = 0;
 
     // Start collecting again
+    trackManualRoster();
     asyncCollectTopics();
 
     // Set title
