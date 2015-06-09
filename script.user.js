@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.4.3
+// @version     2.4.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -383,6 +383,10 @@ function displayGiftCard(url, source) {
     // Steam group icon
     if (giftType == 2) {
         var groupNames = getGiftGroups(source);
+
+        if (groupNames.length > 45) {
+            groupNames = groupNames.substring(0, 45) + "...";
+        }
 
         var steamGroupDiv = document.createElement("div");
         steamGroupDiv.setAttribute("class", "featured__column featured__column--group");
