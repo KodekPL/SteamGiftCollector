@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.4.2
+// @version     2.4.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -387,12 +387,15 @@ function displayGiftCard(url, source) {
         var steamGroupDiv = document.createElement("div");
         steamGroupDiv.setAttribute("class", "featured__column featured__column--group");
         steamGroupDiv.setAttribute("style", "position:absolute; margin:7px 7px;");
-        steamGroupDiv.setAttribute("title", groupNames);
 
         var steamGroupIcon = document.createElement("i");
         steamGroupIcon.setAttribute("class", "fa fa-fw fa-user");
 
+        var steamGroupName = document.createElement("span");
+        steamGroupName.innerHTML = groupNames;
+
         steamGroupDiv.appendChild(steamGroupIcon);
+        steamGroupDiv.appendChild(steamGroupName);
 
         cardContentDiv.appendChild(steamGroupDiv);
     }
