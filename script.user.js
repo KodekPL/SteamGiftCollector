@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.4.4
+// @version     2.5
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -26,6 +26,7 @@ var giftsLoadingText; // Div with progress text
 var giftsRefreshButton; // Div with refresh button
 var giftsDisplayButton; // Div with gifts display button
 var manualRosterBox; // Text area with manual roster links
+var steamCollectCheckboxText; // Checkbox with steam collecting data flag
 
 var forumPagesTrackerCount = 0; // Holds amount of checked forum pages
 var topicsPagesTracker = []; // Holds all collected topics pages
@@ -45,6 +46,10 @@ var progressGiftsCount = 0; // Hold amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected gifts
 var collectedValidGiftsCount = 0; // Holds amount of collected valid gifts
 var collectedInvalidGiftsCount = 0; // Hold amount of collected invalid gifts
+
+var steamPageTracker = []; // Holds all collected steam page ids
+var steamPageCards = []; // Holds all collected steam page id with cards
+var collectedSteamPageCount = 0; // Holds amount of collected steam pages
 
 //////
 // RUNTIME: Startup - Add 'Collect Gifts' button to the sidebar
@@ -68,7 +73,24 @@ $(document).ready(function() {
         startCollecting();
     };
 
-    // Manual Roster Box
+    // Steam data collection check box
+    var steamCollectDiv = document.createElement("div");
+    steamCollectDiv.setAttribute("data-checkbox-value", "key");
+    steamCollectDiv.setAttribute("class", "form__checkbox");
+
+    steamCollectCheckbox = document.createElement("input");
+    steamCollectCheckbox.setAttribute("id", "collectSteamData");
+    steamCollectCheckbox.setAttribute("type", "checkbox");
+    steamCollectCheckbox.setAttribute("value", "Collect Steam Data");
+    steamCollectCheckbox.setAttribute("style", "width: 16px;");
+
+    var steamCollectCheckboxText = document.createElement("span");
+    steamCollectCheckboxText.innerHTML = "Collect Steam Data";
+
+    steamCollectDiv.appendChild(steamCollectCheckbox);
+    steamCollectDiv.appendChild(steamCollectCheckboxText);
+
+    // Manual roster box
     manualRosterBox = document.createElement("textarea");
     manualRosterBox.setAttribute("name", "manual-roster");
     manualRosterBox.setAttribute("style", "overflow: hidden; word-wrap: break-word; height: 100px;");
@@ -77,6 +99,7 @@ $(document).ready(function() {
     loadManualRoster();
 
     sidebarDiv.appendChild(startButton);
+    sidebarDiv.appendChild(steamCollectDiv);
     sidebarDiv.appendChild(manualRosterBox);
 });
 
@@ -115,6 +138,9 @@ function startCollecting() {
 
     isRunning = true;
 
+    console.log("Collecting started - " + GM_info.script.version);
+    console.log("Collecting Steam Data: " + ((steamCollectCheckbox.checked) ? "Active" : "Inactive"));
+
     prepareGiftCardsContainer();
     asyncCollectTopics();
 }
@@ -134,6 +160,11 @@ function endCollecting() {
 
     // Set title
     document.title = "Collecting complete!";
+
+    // Apply collected steam page data
+    if (steamCollectCheckbox.checked) {
+        applySteamPageData();
+    }
 }
 
 //////
@@ -349,6 +380,12 @@ function displayGiftCard(url, source) {
     var giftAuthor = getGiftAuthor(source);
     var giftAuthorAvatar = getGiftAuthorAvatar(source);
     var hasJoined = hasJoinedGift(source);
+    var steamPage = getSteamPage(source);
+    var steamId = steamPage.split("/")[4];
+
+    if (steamCollectCheckbox.checked) {
+        collectSteamPageData(steamPage);
+    }
 
     // Get gift sort data
     var sortValue = 0;
@@ -364,6 +401,7 @@ function displayGiftCard(url, source) {
     var cardContentDiv = document.createElement("div");
     cardContentDiv.setAttribute("class", "giveaway__column");
     cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#B9D393,#F0F2F5);" : ""));
+    cardContentDiv.setAttribute("steamId", steamId);
 
     // Invite only icon
     if (giftType == 1) {
@@ -430,7 +468,7 @@ function displayGiftCard(url, source) {
     var gameTitleDiv = document.createElement("div");
     gameTitleDiv.setAttribute("class", "featured__heading__medium");
     gameTitleDiv.setAttribute("style", "text-align:center; font-size:16px;");
-    gameTitleDiv.innerHTML = giftGameTitle + " (" + giftEntries + " entries)";
+    gameTitleDiv.innerHTML = "<a href=\"" + steamPage + "\" target=\"_blank\">" + giftGameTitle + "</a> (" + giftEntries + " entries)";
 
     cardContentDiv.appendChild(gameTitleDiv);
 
@@ -644,6 +682,55 @@ function refreshCollection() {
 }
 
 //////
+// RUNTIME: Collect steam page data
+//////
+function collectSteamPageData(steamUrl) {
+    var steamId = steamUrl.split("/")[4];
+
+    if (containsString(steamPageTracker, steamId)) {
+        return;
+    }
+
+    steamPageTracker.push(steamId);
+
+    $.ajax({
+        url : "http://store.steampowered.com/api/appdetails?appids=" + steamId,
+        success : function (source) {
+            // Check for data containing info about cards
+            if (source.length > 4 && source.indexOf("id\":29,\"description") >= 0) {
+                steamPageCards.push(steamId);
+            }
+        }
+    });
+}
+
+//////
+// RUNTIME: Apply steam data to gift cards
+//////
+function applySteamPageData() {
+    for (var i = 0; i < sortedGiftCards.length; i++) {
+        var cardDiv = sortedGiftCards[i]['node'];
+        var divId = cardDiv.id;
+        var steamId = cardDiv.getAttribute("steamId");
+
+        // Apply steam game cards data
+        if (containsString(steamPageCards, steamId)) {
+            var hasCardsDiv = document.createElement("div");
+            hasCardsDiv.setAttribute("title", "Has Cards");
+            hasCardsDiv.setAttribute("class", "featured__column featured__column--invite-only");
+            hasCardsDiv.setAttribute("style", "position:absolute; margin:37px 7px;");
+
+            var hasCardsIcon = document.createElement("i");
+            hasCardsIcon.setAttribute("class", "fa fa-bookmark");
+
+            hasCardsDiv.appendChild(hasCardsIcon);
+
+            cardDiv.insertBefore(hasCardsDiv, cardDiv.childNodes[1]);
+        }
+    }
+}
+
+//////
 // RUNTIME: End refresing process
 //////
 function endRefresh() {
@@ -688,8 +775,8 @@ function trackGiveawayUrls(source, urlsSource) {
             progressGiftsCount++;
 
             $.ajax({
-                url : url,
-                success : function (source) {
+                url: url,
+                success: function(source) {
                     trackGiveawayUrls(source, this.url);
 
                     if (isGiftValid(source)) {
@@ -718,7 +805,7 @@ function trackGiveawayUrls(source, urlsSource) {
                         giftsLoadingText.innerHTML = " Refreshing gifts... (" + collectedValidGiftsCount + "/" + validGiftsTracker.length + ")";
                     }
                 },
-                complete: function () {
+                complete: function() {
                     collectedGiftsCount++;
 
                     if (collectedGiftsCount >= progressGiftsCount) {
@@ -988,6 +1075,21 @@ function getGiftGroups(source) {
 //////
 function hasJoinedGift(source) {
     return source.indexOf("sidebar__entry-insert is-hidden") >= 0;
+}
+
+//////
+// UTIL: Returns steam page url from given source
+//////
+function getSteamPage(source) {
+    var extractedUrls = extractUrls(source);
+
+    for (var i = 0; i < extractedUrls.length; i++) {
+        var url = extractedUrls[i];
+
+        if (url.indexOf("store.steampowered.com") >= 0) {
+            return url;
+        }
+    }
 }
 
 //////
