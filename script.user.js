@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.6
+// @version     2.6.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -346,6 +346,7 @@ function displayGiftCard(url, source) {
     var giftGameTitle = getGiftGameTitle(source);
     var giftType = getGiftType(source);
     var giftGameImage = getGiftGameImage(source);
+    var giftPoints = getGiftPoints(source);
     var giftEntries = getGiftEntries(source);
     var giftTime = getGiftTime(source);
     var giftAuthor = getGiftAuthor(source);
@@ -359,8 +360,8 @@ function displayGiftCard(url, source) {
     sortValue += giftGameTitle.charCodeAt(0);
 
     // Prepare gift data
-    if(giftGameTitle.length > 20) {
-        giftGameTitle = giftGameTitle.substring(0, 20) + "...";
+    if(giftGameTitle.length > 30) {
+        giftGameTitle = giftGameTitle.substring(0, 30) + "...";
     }
 
     // Create card
@@ -387,8 +388,8 @@ function displayGiftCard(url, source) {
     if (giftType == 2) {
         var groupNames = getGiftGroups(source);
 
-        if (groupNames.length > 45) {
-            groupNames = groupNames.substring(0, 45) + "...";
+        if (groupNames.length > 36) {
+            groupNames = groupNames.substring(0, 36) + "...";
         }
 
         var steamGroupDiv = document.createElement("div");
@@ -415,13 +416,13 @@ function displayGiftCard(url, source) {
     gameImgUrl.href = url;
 
     var gameImg = document.createElement("img");
-    gameImg.setAttribute("style", "display:block; margin:0 auto; padding:5px; width:292px; height:136px;");
+    gameImg.setAttribute("style", "display:block; margin:0 auto; padding:5px; width:292px; height:136px; border-radius: 10px;");
     gameImg.src = giftGameImage;
 
     gameImgUrl.appendChild(gameImg);
 
     var avatarImg = document.createElement("img");
-    avatarImg.setAttribute("style", "width:3%; height:auto; position:absolute; margin:-48px 104px;");
+    avatarImg.setAttribute("style", "width:3%; height:auto; position:absolute; margin:-48px 104px; border-radius: 10px;");
     avatarImg.src = giftAuthorAvatar;
 
     gameImageDiv.appendChild(gameImgUrl);
@@ -433,9 +434,17 @@ function displayGiftCard(url, source) {
     var gameTitleDiv = document.createElement("div");
     gameTitleDiv.setAttribute("class", "featured__heading__medium");
     gameTitleDiv.setAttribute("style", "text-align:center; font-size:16px;");
-    gameTitleDiv.innerHTML = "<a href=\"" + steamPage + "\" target=\"_blank\">" + giftGameTitle + "</a> (" + giftEntries + " entries)";
+    gameTitleDiv.innerHTML = "<a href=\"" + steamPage + "\" target=\"_blank\">" + giftGameTitle + "</a>";
 
     cardContentDiv.appendChild(gameTitleDiv);
+
+    // Add game entries and points to card
+    var gameStatusDiv = document.createElement("div");
+    gameStatusDiv.setAttribute("class", "giveaway__heading__thin");
+    gameStatusDiv.setAttribute("style", "line-height:10px;");
+    gameStatusDiv.innerHTML = giftEntries + " entries (" + giftPoints + "P)";
+
+    cardContentDiv.appendChild(gameStatusDiv);
 
     // Add info div for time and author
     var giftInfoDiv = document.createElement("div");
@@ -673,7 +682,23 @@ function trackGiveawayUrls(source, urlsSource) {
         var url = extractedUrls[i];
 
         // Look for giveaway on steamgift that not already tracked
-        if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0 && !containsString(giftsTracker, url)) {
+        if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0) {
+            // Count amount of slashes in url
+            var urlParts = (url.match(/\//g) || []).length;
+
+            // If url has less than 5 slashes, add one at the end
+            if (urlParts < 5) {
+                url += "/";
+            } else {
+                // If url has more than 5 slashes, remove unnecessary part of the url
+                // Leave only gift id in the url
+                url = url.split("/", 5).join("/") + "/";
+            }
+
+            if (containsString(giftsTracker, url)) {
+                continue;
+            }
+
             giftsTracker.push(url);
 
             // Add gift source
@@ -859,6 +884,27 @@ function getGiftType(source) {
 
     // Unknown type
     return 0;
+}
+
+//////
+// UTIL: Returns gift points amount as integer from given source
+//////
+function getGiftPoints(source) {
+    // Get start point
+    var pointsStartPoint = source.indexOf("featured__heading__small");
+
+    // Get end point
+    var pointsEndPoint = pointsStartPoint + 34;
+
+    // Cut substring with arrow parentheses characters
+    var splitPointsString = source.substring(pointsStartPoint, pointsEndPoint).split(">");
+    var stringPointsResult = splitPointsString[1].split("<")[0];
+    stringPointsResult = stringPointsResult.substring(1, stringPointsResult.length - 2);
+
+    // Turn string result into int
+    var intPointsResult = parseInt(stringPointsResult.replace(/,/g, ""));
+
+    return intPointsResult;
 }
 
 //////
