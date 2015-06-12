@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.6.2
+// @version     2.6.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -735,7 +735,7 @@ function trackGiveawayUrls(source, urlsSource) {
                 isRepeating: false,
                 success: function(source) {
                     if (!source || source.length < 2) {
-                        isRepeating = true;
+                        this.isRepeating = true;
 
                         $.ajax(this);
                         return;
@@ -770,8 +770,8 @@ function trackGiveawayUrls(source, urlsSource) {
                     }
                 },
                 complete: function() {
-                    if (isRepeating) {
-                        isRepeating = false;
+                    if (this.isRepeating) {
+                        this.isRepeating = false;
                         return;
                     }
 
