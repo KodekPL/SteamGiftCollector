@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.6.1
+// @version     2.6.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -244,6 +244,11 @@ function asyncCollectTopics() {
         $.ajax({
             url : "http://www.steamgifts.com/discussions/search?page=" + i,
             success : function (source) {
+                if (!source || source.length < 2) {
+                    $.ajax(this);
+                    return;
+                }
+
                 // Replace hrefs with site domain to extract topic urls easier
                 var fixSource = source.replace(/href="/g, "http://www.steamgifts.com");
                 var extractedUrls = extractUrls(fixSource);
@@ -284,6 +289,11 @@ function asyncScanForTopicPages() {
         $.ajax({
             url : topicsTracker[i],
             success : function (source) {
+                if (!source || source.length < 2) {
+                    $.ajax(this);
+                    return;
+                }
+
                 // Collect all giveaway urls within first topic page
                 trackGiveawayUrls(source, this.url);
 
@@ -330,6 +340,11 @@ function asyncScanTopicsForGifts() {
         $.ajax({
             url : topicsPagesTracker[i],
             success : function (source) {
+                if (!source || source.length < 2) {
+                    $.ajax(this);
+                    return;
+                }
+
                 trackGiveawayUrls(source, this.url);
             }
         });
@@ -717,7 +732,15 @@ function trackGiveawayUrls(source, urlsSource) {
 
             $.ajax({
                 url: url,
+                isRepeating: false,
                 success: function(source) {
+                    if (!source || source.length < 2) {
+                        isRepeating = true;
+
+                        $.ajax(this);
+                        return;
+                    }
+
                     trackGiveawayUrls(source, this.url);
 
                     if (isGiftValid(source)) {
@@ -747,6 +770,11 @@ function trackGiveawayUrls(source, urlsSource) {
                     }
                 },
                 complete: function() {
+                    if (isRepeating) {
+                        isRepeating = false;
+                        return;
+                    }
+
                     collectedGiftsCount++;
 
                     if (collectedGiftsCount >= progressGiftsCount) {
