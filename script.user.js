@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 // Settings
-var scanPagesCount = 1; // How many forum pages to scan?
+var scanPagesCount = 4; // How many forum pages to scan?
 
 var isRunning = false; // Is script in progress
 var isRefreshing = false; // Is script refresing collected gifts?
@@ -682,7 +682,7 @@ function trackGiveawayUrls(source, urlsSource) {
         var url = extractedUrls[i];
 
         // Look for giveaway on steamgift that not already tracked
-        if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0 && !containsString(giftsTracker, url)) {
+        if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0) {
             // Count amount of slashes in url
             var urlParts = (url.match(/\//g) || []).length;
 
@@ -693,6 +693,10 @@ function trackGiveawayUrls(source, urlsSource) {
                 // If url has more than 5 slashes, remove unnecessary part of the url
                 // Leave only gift id in the url
                 url = url.split("/", 5).join("/") + "/";
+            }
+
+            if (containsString(giftsTracker, url)) {
+                return;
             }
 
             giftsTracker.push(url);
