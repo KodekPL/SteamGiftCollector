@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.7
+// @version     2.7.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -90,14 +90,14 @@ $(document).ready(function() {
 // RUNTIME: Save manual roster
 //////
 function saveManualRoster() {
-    localStorage.manualRoster = manualRosterBox.value;
+    localStorage.sgc_manualRoster = manualRosterBox.value;
 }
 
 //////
 // RUNTIME: Load manual roster
 //////
 function loadManualRoster() {
-    var storage = localStorage.manualRoster;
+    var storage = localStorage.sgc_manualRoster;
 
     if (storage) {
         manualRosterBox.value = storage;
@@ -108,21 +108,21 @@ function loadManualRoster() {
 // RUNTIME: Save hasCards array
 //////
 function saveHasCardsArray() {
-    localStorage.hasCards = JSON.stringify(hasCardsGames);
-    localStorage.hasNotCards = JSON.stringify(hasNotCardsGames);
+    localStorage.sgc_hasCards = JSON.stringify(hasCardsGames);
+    localStorage.sgc_hasNotCards = JSON.stringify(hasNotCardsGames);
 }
 
 //////
 // RUNTIME: Load hasCards array
 //////
 function loadHasCardsArray() {
-    var hasCardsJson = localStorage.hasCards;
+    var hasCardsJson = localStorage.sgc_hasCards;
 
     if (hasCardsJson) {
         hasCardsGames = JSON.parse(hasCardsJson);
     }
 
-    var hasNotCardsJson = localStorage.hasNotCards;
+    var hasNotCardsJson = localStorage.sgc_hasNotCards;
 
     if (hasNotCardsJson) {
         hasNotCardsGames = JSON.parse(hasNotCardsJson);
@@ -133,14 +133,14 @@ function loadHasCardsArray() {
 // RUNTIME: Save hasCards array
 //////
 function saveHiddenGiftsArray() {
-    localStorage.hiddenGifts = JSON.stringify(hiddenGifts);
+    localStorage.sgc_hiddenGifts = JSON.stringify(hiddenGifts);
 }
 
 //////
 // RUNTIME: Load hasCards array
 //////
 function loadHiddenGiftsArray() {
-    var hiddenGiftsJson = localStorage.hiddenGifts;
+    var hiddenGiftsJson = localStorage.sgc_hiddenGifts;
 
     if (!hiddenGiftsJson) {
         return;
@@ -153,7 +153,7 @@ function loadHiddenGiftsArray() {
 // RUNTIME: Track manual roster
 //////
 function trackManualRoster() {
-    trackGiveawayUrls(localStorage.manualRoster, "http://www.steamgifts.com/");
+    trackGiveawayUrls(localStorage.sgc_manualRoster, "http://www.steamgifts.com/");
 }
 
 //////
@@ -450,7 +450,7 @@ function displayGiftCard(url, source) {
         inviteOnlyDiv.setAttribute("style", "position:absolute; margin:7px 7px;");
 
         var inviteOnlyIcon = document.createElement("i");
-        inviteOnlyIcon.setAttribute("class", "fa fa-fw fa-lock");
+        inviteOnlyIcon.setAttribute("class", "fa fa-lock");
 
         inviteOnlyDiv.appendChild(inviteOnlyIcon);
 
@@ -512,7 +512,6 @@ function displayGiftCard(url, source) {
     var hasCardsButtonDiv = document.createElement("div");
     hasCardsButtonDiv.setAttribute("class", "nav__button-container");
     hasCardsButtonDiv.setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
-    hasCardsButtonDiv.setAttribute("title", "Game has cards?");
 
     var hasCardsButton = document.createElement("div");
     hasCardsButton.setAttribute("class", "nav__button");
@@ -521,6 +520,7 @@ function displayGiftCard(url, source) {
     } else {
         hasCardsButton.setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
     }
+    hasCardsButton.setAttribute("title", "Game has cards?");
     hasCardsButton.setAttribute("id", "hasCardsButton");
     hasCardsButton.setAttribute("steamid", steamId);
     hasCardsButton.onclick = function() {
@@ -561,6 +561,7 @@ function displayGiftCard(url, source) {
     } else {
         hasNotCardsButton.setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
     }
+    hasNotCardsButton.setAttribute("title", "Game has not cards?");
     hasNotCardsButton.setAttribute("id", "hasNotCardsButton");
     hasNotCardsButton.setAttribute("steamid", steamId);
     hasNotCardsButton.onclick = function() {
@@ -605,14 +606,19 @@ function displayGiftCard(url, source) {
     // Hide Button
     var hideButtonDiv = document.createElement("div");
     hideButtonDiv.setAttribute("class", "nav__button-container");
+    hideButtonDiv.setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+
+    var hideButton = document.createElement("div");
+    hideButton.setAttribute("class", "nav__button");
     if (containsObject(hiddenGifts, giftId)) {
-        hideButtonDiv.setAttribute("style", "background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+        hideButton.setAttribute("style", "width: 112px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
     } else {
-        hideButtonDiv.setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+        hideButton.setAttribute("style", "width: 112px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
     }
-    hideButtonDiv.setAttribute("title", "Hide giveaway?");
-    hideButtonDiv.setAttribute("giftid", giftId);
-    hideButtonDiv.onclick = function() {
+    hideButton.setAttribute("title", "Hide giveaway?");
+    hideButton.setAttribute("id", "hideGiftButton");
+    hideButton.setAttribute("giftid", giftId);
+    hideButton.onclick = function() {
         var findAttribute = giftId;
         var isHidden = false;
 
@@ -631,21 +637,17 @@ function displayGiftCard(url, source) {
 
         // Find and hide gift button div element with gift id
         for (var i = 0; i < allDivElements.length; i++) {
-            if (allDivElements[i].getAttribute("giftid") == findAttribute) {
+            if (allDivElements[i].getAttribute("id") == "hideGiftButton" && allDivElements[i].getAttribute("giftid") == findAttribute) {
                 if (isHidden) {
-                    allDivElements[i].setAttribute("style", "background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+                    allDivElements[i].setAttribute("style", "width: 112px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
                 } else {
-                    allDivElements[i].setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+                    allDivElements[i].setAttribute("style", "width: 112px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
                 }
 
                 break;
             }
         }
     }
-
-    var hideButton = document.createElement("a");
-    hideButton.setAttribute("class", "nav__button");
-    hideButton.setAttribute("style", "width: 112px;");
 
     var hideIcon = document.createElement("i");
     hideIcon.setAttribute("class", "fa fa-times");
