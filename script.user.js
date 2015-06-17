@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.7.1
+// @version     2.7.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -39,6 +39,7 @@ var topicsTitlesTracker = {}; // Holds topic title and link it came from
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 
 var hiddenGifts = []; // Holds hidden gifts ids
+var likeGames = []; // Holds liked games ids
 var hasCardsGames = []; // Holds steam games ids with cards
 var hasNotCardsGames = []; // Holds steam games ids without cards
 
@@ -70,6 +71,7 @@ $(document).ready(function() {
     startButton.onclick = function() {
         loadHasCardsArray();
         loadHiddenGiftsArray();
+        loadLikedGamesArray();
         saveManualRoster();
         startCollecting();
     };
@@ -130,14 +132,14 @@ function loadHasCardsArray() {
 }
 
 //////
-// RUNTIME: Save hasCards array
+// RUNTIME: Save hidden gifts array
 //////
 function saveHiddenGiftsArray() {
     localStorage.sgc_hiddenGifts = JSON.stringify(hiddenGifts);
 }
 
 //////
-// RUNTIME: Load hasCards array
+// RUNTIME: Load hidden gifts array
 //////
 function loadHiddenGiftsArray() {
     var hiddenGiftsJson = localStorage.sgc_hiddenGifts;
@@ -147,6 +149,26 @@ function loadHiddenGiftsArray() {
     }
 
     hiddenGifts = JSON.parse(hiddenGiftsJson);
+}
+
+//////
+// RUNTIME: Save liked games array
+//////
+function saveLikedGamesArray() {
+    localStorage.sgc_likeGames = JSON.stringify(likeGames);
+}
+
+//////
+// RUNTIME: Load liked games array
+//////
+function loadLikedGamesArray() {
+    var likeGamesJson = localStorage.sgc_likeGames;
+
+    if (!likeGamesJson) {
+        return;
+    }
+
+    likeGames = JSON.parse(likeGamesJson);
 }
 
 //////
@@ -611,9 +633,9 @@ function displayGiftCard(url, source) {
     var hideButton = document.createElement("div");
     hideButton.setAttribute("class", "nav__button");
     if (containsObject(hiddenGifts, giftId)) {
-        hideButton.setAttribute("style", "width: 112px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+        hideButton.setAttribute("style", "width: 65px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
     } else {
-        hideButton.setAttribute("style", "width: 112px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+        hideButton.setAttribute("style", "width: 65px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
     }
     hideButton.setAttribute("title", "Hide giveaway?");
     hideButton.setAttribute("id", "hideGiftButton");
@@ -639,9 +661,9 @@ function displayGiftCard(url, source) {
         for (var i = 0; i < allDivElements.length; i++) {
             if (allDivElements[i].getAttribute("id") == "hideGiftButton" && allDivElements[i].getAttribute("giftid") == findAttribute) {
                 if (isHidden) {
-                    allDivElements[i].setAttribute("style", "width: 112px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+                    allDivElements[i].setAttribute("style", "width: 65px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
                 } else {
-                    allDivElements[i].setAttribute("style", "width: 112px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+                    allDivElements[i].setAttribute("style", "width: 65px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
                 }
 
                 break;
@@ -655,6 +677,57 @@ function displayGiftCard(url, source) {
     hideButton.appendChild(hideIcon);
     hideButtonDiv.appendChild(hideButton);
     optionButtonsDiv.appendChild(hideButtonDiv);
+
+    // Like Button
+    var likeButtonDiv = document.createElement("div");
+    likeButtonDiv.setAttribute("class", "nav__button-container");
+    likeButtonDiv.setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+
+    var likeButton = document.createElement("div");
+    likeButton.setAttribute("class", "nav__button");
+    if (containsObject(likeGames, steamId)) {
+        likeButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CC44A9 0px, #E154BC 8px, #A63182 100%);");
+    } else {
+        likeButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+    }
+    likeButton.setAttribute("title", "Like the game?");
+    likeButton.setAttribute("id", "likeGameButton");
+    likeButton.setAttribute("steamid", steamId);
+    likeButton.onclick = function() {
+        var findAttribute = steamId;
+        var isLiking = false;
+
+        // Add/Remove element from array
+        if (!containsObject(likeGames, findAttribute)) {
+            likeGames.push(findAttribute);
+            isLiking = true;
+        } else {
+            likeGames.splice(likeGames.indexOf(findAttribute), 1);
+            isLiking = false;
+        }
+
+        saveLikedGamesArray();
+
+        var allDivElements = document.getElementsByTagName('div');
+
+        // Find and like all game buttons div element with steam id
+        for (var i = 0; i < allDivElements.length; i++) {
+            if (allDivElements[i].getAttribute("id") == "likeGameButton" && allDivElements[i].getAttribute("steamid") == findAttribute) {
+                if (isLiking) {
+                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CC44A9 0px, #E154BC 8px, #A63182 100%);");
+                } else {
+                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+                }
+            }
+        }
+    }
+
+    var likeIcon = document.createElement("i");
+    likeIcon.setAttribute("class", "fa fa-heart");
+
+    likeButton.appendChild(likeIcon);
+    likeButtonDiv.appendChild(likeButton);
+    optionButtonsDiv.appendChild(likeButtonDiv);
 
     cardContentDiv.appendChild(optionButtonsDiv);
 
