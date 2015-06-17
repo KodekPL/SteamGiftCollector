@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.7.2
+// @version     2.7.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -625,59 +625,6 @@ function displayGiftCard(url, source) {
 
     optionButtonsDiv.appendChild(hasCardsButtonDiv);
 
-    // Hide Button
-    var hideButtonDiv = document.createElement("div");
-    hideButtonDiv.setAttribute("class", "nav__button-container");
-    hideButtonDiv.setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
-
-    var hideButton = document.createElement("div");
-    hideButton.setAttribute("class", "nav__button");
-    if (containsObject(hiddenGifts, giftId)) {
-        hideButton.setAttribute("style", "width: 65px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
-    } else {
-        hideButton.setAttribute("style", "width: 65px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
-    }
-    hideButton.setAttribute("title", "Hide giveaway?");
-    hideButton.setAttribute("id", "hideGiftButton");
-    hideButton.setAttribute("giftid", giftId);
-    hideButton.onclick = function() {
-        var findAttribute = giftId;
-        var isHidden = false;
-
-        // Add/Remove element from array
-        if (!containsObject(hiddenGifts, findAttribute)) {
-            hiddenGifts.push(findAttribute);
-            isHidden = true;
-        } else {
-            hiddenGifts.splice(hiddenGifts.indexOf(findAttribute), 1);
-            isHidden = false;
-        }
-
-        saveHiddenGiftsArray();
-
-        var allDivElements = document.getElementsByTagName('div');
-
-        // Find and hide gift button div element with gift id
-        for (var i = 0; i < allDivElements.length; i++) {
-            if (allDivElements[i].getAttribute("id") == "hideGiftButton" && allDivElements[i].getAttribute("giftid") == findAttribute) {
-                if (isHidden) {
-                    allDivElements[i].setAttribute("style", "width: 65px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
-                } else {
-                    allDivElements[i].setAttribute("style", "width: 65px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
-                }
-
-                break;
-            }
-        }
-    }
-
-    var hideIcon = document.createElement("i");
-    hideIcon.setAttribute("class", "fa fa-times");
-
-    hideButton.appendChild(hideIcon);
-    hideButtonDiv.appendChild(hideButton);
-    optionButtonsDiv.appendChild(hideButtonDiv);
-
     // Like Button
     var likeButtonDiv = document.createElement("div");
     likeButtonDiv.setAttribute("class", "nav__button-container");
@@ -686,9 +633,9 @@ function displayGiftCard(url, source) {
     var likeButton = document.createElement("div");
     likeButton.setAttribute("class", "nav__button");
     if (containsObject(likeGames, steamId)) {
-        likeButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CC44A9 0px, #E154BC 8px, #A63182 100%);");
+        likeButton.setAttribute("style", "width: 65px; background-image: linear-gradient(#CC44A9 0px, #E154BC 8px, #A63182 100%);");
     } else {
-        likeButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+        likeButton.setAttribute("style", "width: 65px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
     }
     likeButton.setAttribute("title", "Like the game?");
     likeButton.setAttribute("id", "likeGameButton");
@@ -714,9 +661,9 @@ function displayGiftCard(url, source) {
         for (var i = 0; i < allDivElements.length; i++) {
             if (allDivElements[i].getAttribute("id") == "likeGameButton" && allDivElements[i].getAttribute("steamid") == findAttribute) {
                 if (isLiking) {
-                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CC44A9 0px, #E154BC 8px, #A63182 100%);");
+                    allDivElements[i].setAttribute("style", "width: 65px; background-image: linear-gradient(#CC44A9 0px, #E154BC 8px, #A63182 100%);");
                 } else {
-                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+                    allDivElements[i].setAttribute("style", "width: 65px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
                 }
             }
         }
@@ -728,6 +675,59 @@ function displayGiftCard(url, source) {
     likeButton.appendChild(likeIcon);
     likeButtonDiv.appendChild(likeButton);
     optionButtonsDiv.appendChild(likeButtonDiv);
+
+    // Hide Button
+    var hideButtonDiv = document.createElement("div");
+    hideButtonDiv.setAttribute("class", "nav__button-container");
+    hideButtonDiv.setAttribute("style", "background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+
+    var hideButton = document.createElement("div");
+    hideButton.setAttribute("class", "nav__button");
+    if (containsObject(hiddenGifts, giftId)) {
+        hideButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+    } else {
+        hideButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+    }
+    hideButton.setAttribute("title", "Hide giveaway?");
+    hideButton.setAttribute("id", "hideGiftButton");
+    hideButton.setAttribute("giftid", giftId);
+    hideButton.onclick = function() {
+        var findAttribute = giftId;
+        var isHidden = false;
+
+        // Add/Remove element from array
+        if (!containsObject(hiddenGifts, findAttribute)) {
+            hiddenGifts.push(findAttribute);
+            isHidden = true;
+        } else {
+            hiddenGifts.splice(hiddenGifts.indexOf(findAttribute), 1);
+            isHidden = false;
+        }
+
+        saveHiddenGiftsArray();
+
+        var allDivElements = document.getElementsByTagName('div');
+
+        // Find and hide gift button div element with gift id
+        for (var i = 0; i < allDivElements.length; i++) {
+            if (allDivElements[i].getAttribute("id") == "hideGiftButton" && allDivElements[i].getAttribute("giftid") == findAttribute) {
+                if (isHidden) {
+                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+                } else {
+                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+                }
+
+                break;
+            }
+        }
+    }
+
+    var hideIcon = document.createElement("i");
+    hideIcon.setAttribute("class", "fa fa-times");
+
+    hideButton.appendChild(hideIcon);
+    hideButtonDiv.appendChild(hideButton);
+    optionButtonsDiv.appendChild(hideButtonDiv);
 
     cardContentDiv.appendChild(optionButtonsDiv);
 
