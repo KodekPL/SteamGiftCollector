@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.7.3
+// @version     2.7.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -1221,8 +1221,14 @@ function getGiftType(source) {
 // UTIL: Returns gift points amount as integer from given source
 //////
 function getGiftPoints(source) {
-    // Get start point
-    var pointsStartPoint = source.indexOf("featured__heading__small");
+    // Get start point (if there is more small headings, check for the second heading)
+    var pointsStartPoint;
+
+    if (source.match(/featured__heading__small/g).length > 1) {
+        pointsStartPoint = source.split("featured__heading__small", 2).join("featured__heading__small").length;
+    } else {
+        pointsStartPoint = source.indexOf("featured__heading__small");
+    }
 
     // Get end point
     var pointsEndPoint = pointsStartPoint + 34;
