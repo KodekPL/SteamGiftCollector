@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.7.4
+// @version     2.8
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -26,6 +26,8 @@ var giftsLoadingText; // Div with progress text
 var giftsRefreshButton; // Div with refresh button
 var giftsDisplayButton; // Div with gifts display button
 var manualRosterBox; // Text area with manual roster links
+
+var soundComplete; // Holds audio of complete sound
 
 var forumPagesTrackerCount = 0; // Holds amount of checked forum pages
 var topicsPagesTracker = []; // Holds all collected topics pages
@@ -86,6 +88,9 @@ $(document).ready(function() {
 
     sidebarDiv.appendChild(startButton);
     sidebarDiv.appendChild(manualRosterBox);
+
+    // Preload sounds
+    preloadSounds();
 });
 
 //////
@@ -179,6 +184,20 @@ function trackManualRoster() {
 }
 
 //////
+// RUNTIME: Preload sounds
+//////
+function preloadSounds() {
+    soundComplete = new Audio("https://raw.githubusercontent.com/KodekPL/SteamGiftCollector/master/completeSound.wav");
+}
+
+//////
+// RUNTIME: Play complete sound
+//////
+function playCompleteSound() {
+    soundComplete.play();
+}
+
+//////
 // RUNTIME: Start collecting process
 //////
 function startCollecting() {
@@ -209,6 +228,9 @@ function endCollecting() {
 
     // Set title
     document.title = "Collecting complete!";
+
+    // Play complete sound
+    playCompleteSound();
 }
 
 //////
