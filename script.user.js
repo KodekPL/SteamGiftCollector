@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.8
+// @version     2.8.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -461,6 +461,7 @@ function displayGiftCard(url, source) {
     // Get gift data
     var giftGameTitle = getGiftGameTitle(source);
     var giftType = getGiftType(source);
+    var giftLevel = getGiftLevel(source);
     var giftGameImage = getGiftGameImage(source);
     var giftPoints = getGiftPoints(source);
     var giftEntries = getGiftEntries(source);
@@ -523,6 +524,17 @@ function displayGiftCard(url, source) {
         steamGroupDiv.appendChild(steamGroupName);
 
         cardContentDiv.appendChild(steamGroupDiv);
+    }
+
+    // Gift level icon
+    if (giftLevel > 0) {
+        var giftLevelDiv = document.createElement("div");
+        giftLevelDiv.setAttribute("title", "Contributor Level");
+        giftLevelDiv.setAttribute("class", "featured__column featured__column--contributor-level featured__column--contributor-level--positive");
+        giftLevelDiv.setAttribute("style", "position:absolute; margin:7px 265px;");
+        giftLevelDiv.innerHTML = giftLevel + ((giftLevel < 10) ? "+" : "");
+
+        cardContentDiv.appendChild(giftLevelDiv);
     }
 
     // Add game image to card
@@ -1237,6 +1249,30 @@ function getGiftType(source) {
 
     // Unknown type
     return 0;
+}
+
+//////
+// UTIL: Returns gift level as integer from given source
+//////
+function getGiftLevel(source) {
+    // Get start point of entries
+    var levelStartPoint = source.indexOf("featured__column--contributor-level--positive");
+
+    if (levelStartPoint == -1) {
+        return -1;
+    }
+
+    // Get end point of entries
+    var levelEndPoint = levelStartPoint + 86;
+
+    // Cut substring with arrow parentheses characters
+    var splitLevelString = source.substring(levelStartPoint, levelEndPoint).split(">");
+    var stringLevelResult = splitLevelString[1].split("<")[0];
+
+    // Turn string result into int
+    var intLevelResult = parseInt(stringLevelResult.replace(/\D/g, ''));
+
+    return intLevelResult;
 }
 
 //////
