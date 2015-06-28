@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.8.1
+// @version     2.8.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -460,6 +460,7 @@ function displayGiftCard(url, source) {
 
     // Get gift data
     var giftGameTitle = getGiftGameTitle(source);
+    var giftCopies = getGiftCopies(source);
     var giftType = getGiftType(source);
     var giftLevel = getGiftLevel(source);
     var giftGameImage = getGiftGameImage(source);
@@ -769,7 +770,21 @@ function displayGiftCard(url, source) {
     var gameTitleDiv = document.createElement("div");
     gameTitleDiv.setAttribute("class", "featured__heading__medium");
     gameTitleDiv.setAttribute("style", "text-align:center; font-size:16px;");
-    gameTitleDiv.innerHTML = "<a href=\"" + steamPage + "\" target=\"_blank\">" + giftGameTitle + "</a>";
+
+    var gameTitleText = document.createElement("a");
+    gameTitleText.setAttribute("href", steamPage);
+    gameTitleText.setAttribute("target", "_blank");
+    gameTitleText.innerHTML = giftGameTitle;
+
+    gameTitleDiv.appendChild(gameTitleText);
+
+    if (giftCopies > 1) {
+        var gameCopiesAmount = document.createElement("a");
+        gameCopiesAmount.setAttribute("class", "giveaway__heading__thin");
+        gameCopiesAmount.innerHTML = "(" + giftCopies + ")";
+
+        gameTitleDiv.appendChild(gameCopiesAmount);
+    }
 
     cardContentDiv.appendChild(gameTitleDiv);
 
@@ -1231,6 +1246,33 @@ function getGiftGameTitle(source) {
     var titleEndPoint = source.indexOf("</title>");
 
     return source.substring(titleStartPoint + 7, titleEndPoint);
+}
+
+//////
+// UTIL: Returns gift copies amount as integer from given source
+//////
+function getGiftCopies(source) {
+    // Get start point (if there is more small headings, check for the second heading)
+    var copiesStartPoint;
+
+    if (source.match(/featured__heading__small/g).length > 1) {
+        copiesStartPoint = source.indexOf("featured__heading__small");
+    } else {
+        return 1;
+    }
+
+    // Get end point
+    var copiesEndPoint = copiesStartPoint + 34;
+
+    // Cut substring with arrow parentheses characters
+    var splitCopiesString = source.substring(copiesStartPoint, copiesEndPoint).split(">");
+    var stringCopiesResult = splitCopiesString[1].split("<")[0];
+    stringCopiesResult = stringCopiesResult.substring(1, stringCopiesResult.length - 2);
+
+    // Turn string result into int
+    var intCopiesResult = parseInt(stringCopiesResult.replace(/,/g, ""));
+
+    return intCopiesResult;
 }
 
 //////
