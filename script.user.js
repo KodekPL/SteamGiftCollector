@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.8.2
+// @version     2.8.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -71,6 +71,10 @@ $(document).ready(function() {
     startButton.appendChild(versionInfoText);
 
     startButton.onclick = function() {
+        window.onbeforeunload = function() {
+            return "Do you really want to leave this page?";
+        };
+
         loadHasCardsArray();
         loadHiddenGiftsArray();
         loadLikedGamesArray();
