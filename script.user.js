@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.8.3
+// @version     2.8.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -1207,6 +1207,11 @@ function getInvalidGiftReason(source) {
     // No Permission - Steam Group
     if (source.indexOf("You do not have permission") > -1 && source.indexOf("Steam group") > -1) {
         return "No Permission (Steam Group)";
+    }
+
+    // No Permission - Blacklisted
+    if (source.indexOf("blacklist") > -1) {
+        return "No Permission (Blacklisted)";
     }
 
     return null;
