@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.9
+// @version     2.9.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -45,13 +45,14 @@ var likeGames = []; // Holds liked games ids
 var hasCardsGames = []; // Holds steam games ids with cards
 var hasNotCardsGames = []; // Holds steam games ids without cards
 
-var displayMode = 0; // Hold the active display mode for gifts
-var displayGiftsCount = 0; // Hold amount of gifts that are being displayed
+var displayMode = 0; // Holds the active display mode for gifts
+var displayGiftsCount = 0; // Holds amount of gifts that are being displayed
 
-var progressGiftsCount = 0; // Hold amount of gifts that are in progress
+var progressGiftsCount = 0; // Holds amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected gifts
 var collectedValidGiftsCount = 0; // Holds amount of collected valid gifts
-var collectedInvalidGiftsCount = 0; // Hold amount of collected invalid gifts
+var collectedInvalidGiftsCount = 0; // Holds amount of collected invalid gifts
+var fakeGiftsCount = 0; // Holds amount of fake gifts detected
 
 //////
 // RUNTIME: Startup - Add 'Collect Gifts' button to the sidebar
@@ -264,7 +265,7 @@ function prepareGiftCardsContainer() {
     giftsLoadingText.innerHTML = " Scanning for gifts...";
     giftsLoadingText.setAttribute("class", "featured__heading__medium");
     giftsLoadingText.setAttribute("style", "font-size:250%; vertical-align:middle;");
-    giftsLoadingText.setAttribute("title", "Valid/Checked/Overall");
+    giftsLoadingText.setAttribute("title", "Valid/Checked/Overall/Fake");
 
     giftsLoadingDiv.appendChild(giftsLoadingIcon);
     giftsLoadingDiv.appendChild(giftsLoadingText);
@@ -1112,6 +1113,7 @@ function trackGiveawayUrls(source, urlsSource) {
 
                     // Detect fake giveaway and issue a break
                     if (source.indexOf("var baseUrl = '/giveaways';") > -1) { // Unique string visible on main page
+                        fakeGiftsCount++;
                         hasFakeGift = true;
                         return;
                     }
@@ -1139,7 +1141,7 @@ function trackGiveawayUrls(source, urlsSource) {
                     }
 
                     if (!isRefreshing) {
-                        giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + ")";
+                        giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + "/" + "<font color='#da5d88'>" + fakeGiftsCount + "</font>" + ")";
                     } else {
                         giftsLoadingText.innerHTML = " Refreshing gifts... (" + collectedValidGiftsCount + "/" + validGiftsTracker.length + ")";
                     }
