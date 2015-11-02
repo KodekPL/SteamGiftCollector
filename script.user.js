@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.8.4
+// @version     2.9
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -95,6 +95,8 @@ $(document).ready(function() {
 
     // Preload sounds
     preloadSounds();
+
+    console.log("Ready to collect!");
 });
 
 //////
@@ -211,7 +213,7 @@ function startCollecting() {
 
     isRunning = true;
 
-    console.log("Collecting started (" + GM_info.script.version + ")");
+    console.log("Collecting started (" + GM_info.script.version + ")...");
 
     prepareGiftCardsContainer();
     asyncCollectTopics();
@@ -348,6 +350,8 @@ function asyncCollectTopics() {
                     return;
                 }
 
+                console.log("Received discussions page #" + i + "...");
+
                 // Replace hrefs with site domain to extract topic urls easier
                 var fixSource = source.replace(/href="/g, "http://www.steamgifts.com");
                 var extractedUrls = extractUrls(fixSource);
@@ -360,6 +364,8 @@ function asyncCollectTopics() {
                         topicsTracker.push(url);
                     }
                 }
+
+                console.log("Current amount of collected topics: " + topicsTracker.length);
 
                 forumPagesTrackerCount++;
 
@@ -406,6 +412,8 @@ function asyncScanForTopicPages() {
                     }
                 }
 
+                console.log("Collected " + pagesCount + " topic pages...");
+
                 // Collect links to topic pages (start with second page as the first was already checked)
                 for (var i2 = 2; i2 <= pagesCount; i2++) {
                     var topicPageUrl = this.url + "/search?page=" + i2;
@@ -430,7 +438,7 @@ function asyncScanForTopicPages() {
 //////
 function asyncScanTopicsForGifts() {
     console.log("Scanned " + topicsPagesTracker.length + " topics pages...");
-    console.log("Scanning for gifts...");
+    console.log("Scanning topic pages for gifts...");
 
     // Reverse order of added topics pages to start iteration with new ones
     topicsPagesTracker.reverse();
@@ -447,7 +455,11 @@ function asyncScanTopicsForGifts() {
                 trackGiveawayUrls(source, this.url);
             }
         });
+
+        console.log("Checked page " + i + "...");
     }
+
+    console.log("Completed collecting informations!");
 
     trackManualRoster();
 }
@@ -1031,8 +1043,15 @@ function endRefresh() {
 //////
 function trackGiveawayUrls(source, urlsSource) {
     var extractedUrls = extractUrls(source);
+    var hasFakeGift = false;
 
     for (var i = 0; i < extractedUrls.length; i++) {
+        if (hasFakeGift) {
+            console.log("Detected fake gift - waiting 10 seconds..."); // Not confirmed as enough time to wait
+            waitFor(10000);
+            hasFakeGift = false;
+        }
+
         var url = extractedUrls[i];
 
         // Look for giveaway on steamgift that not already tracked
@@ -1054,6 +1073,11 @@ function trackGiveawayUrls(source, urlsSource) {
             }
 
             var giftId = getGiftId(url);
+
+            // If gift id is too short, too long or has invalid characters, return
+            if (giftId.length < 5 || giftId.length > 5 || /^[a-zA-Z0-9- ]*$/.test(giftId) == false) {
+                return;
+            }
 
             giftsTracker.push(url);
 
@@ -1085,6 +1109,12 @@ function trackGiveawayUrls(source, urlsSource) {
                     }
 
                     this.isRepeating = false;
+
+                    // Detect fake giveaway and issue a break
+                    if (source.indexOf("var baseUrl = '/giveaways';") > -1) { // Unique string visible on main page
+                        hasFakeGift = true;
+                        return;
+                    }
 
                     trackGiveawayUrls(source, this.url);
 
@@ -1514,6 +1544,16 @@ function getSteamId(source) {
 
     return parseInt(steamPage.split("/")[4]);
 }
+
+//////
+// UTIL: Wait in miliseconds before next action (BAD IMPLEMENTATION)
+//////
+function waitFor(ms){
+    var startTime = new Date().getTime();
+
+    while (new Date().getTime() < startTime + ms);
+}
+
 
 //////
 // UTIL: Extracts all urls from given source
