@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.9.1
+// @version     2.9.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -630,7 +630,7 @@ function displayGiftCard(url, source) {
 
     var hasNotCardsButton = document.createElement("div");
     hasNotCardsButton.setAttribute("class", "nav__button");
-    if (containsObject(hasNotCardsGames, steamId)) {
+    if (containsObject(hasNotCardsGames, steamId) && !containsObject(hasCardsGames, steamId)) {
         hasNotCardsButton.setAttribute("style", "width: 41px; background-image: linear-gradient(#9567CF 0px, #8C52C2 8px, #6D39A6 100%);");
     } else {
         hasNotCardsButton.setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
