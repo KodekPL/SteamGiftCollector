@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.9.2
+// @version     2.10
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -14,8 +14,8 @@
 // Settings
 var scanPagesCount = 4; // How many forum pages to scan?
 
-var isRunning = false; // Is script in progress
-var isRefreshing = false; // Is script refresing collected gifts?
+var isRunning = false; // Is script in progress?
+var isStopped = false; // Is script stopped?
 
 var giftCardsDiv; // Div with all gift cards
 var invalidGiftCardsDiv; // Div with worth invalid gift cards
@@ -23,8 +23,8 @@ var validHeadingTitleDiv; // Div with valid gifts count
 var invalidHeadingTitleDiv; // Div with invalid gifts count
 var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
-var giftsRefreshButton; // Div with refresh button
 var giftsDisplayButton; // Div with gifts display button
+var giftsStopButton; // Div with gifts stop button
 var manualRosterBox; // Text area with manual roster links
 
 var soundComplete; // Holds audio of complete sound
@@ -227,17 +227,19 @@ function endCollecting() {
     // Hide progress info
     giftsLoadingDiv.setAttribute("class", "is-hidden");
 
-    // Show refresh button
-    giftsRefreshButton.setAttribute("class", "featured__action-button");
-
     // Show display mode button
     giftsDisplayButton.setAttribute("class", "featured__action-button");
+
+    // Hide stop button
+    giftsStopButton.setAttribute("class", "featured__action-button is-hidden");
 
     // Set title
     document.title = "Collecting complete!";
 
     // Play complete sound
-    playCompleteSound();
+    if (!isStopped) {
+        playCompleteSound();
+    }
 }
 
 //////
@@ -286,15 +288,6 @@ function prepareGiftCardsContainer() {
     validHeadingTitleDiv.setAttribute("class", "page__heading__breadcrumbs");
     validHeadingTitleDiv.innerHTML = "Valid Gifts (0)";
 
-    // Gifts Refresh Button
-    giftsRefreshButton = document.createElement("div");
-    giftsRefreshButton.setAttribute("id", "gifts_refresh");
-    giftsRefreshButton.setAttribute("class", "featured__action-button is-hidden");
-    giftsRefreshButton.innerHTML = "Refresh";
-    giftsRefreshButton.onclick = function() {
-        refreshCollection();
-    };
-
     // Gifts Display Button
     giftsDisplayButton = document.createElement("div");
     giftsDisplayButton.setAttribute("id", "gifts_display_switch");
@@ -304,9 +297,18 @@ function prepareGiftCardsContainer() {
         switchDisplayCollection();
     };
 
+    // Gifts Stop Button
+    giftsStopButton = document.createElement("div");
+    giftsStopButton.setAttribute("id", "gifts_stop");
+    giftsStopButton.setAttribute("class", "featured__action-button");
+    giftsStopButton.innerHTML = "Stop";
+    giftsStopButton.onclick = function() {
+        stopCollection();
+    };
+
     validHeadingDiv.appendChild(validHeadingTitleDiv);
     validHeadingDiv.appendChild(giftsDisplayButton);
-    validHeadingDiv.appendChild(giftsRefreshButton);
+    validHeadingDiv.appendChild(giftsStopButton);
 
     // Setup heading for invalid gifts
     var invalidHeadingDiv = document.createElement("div");
@@ -392,6 +394,10 @@ function asyncScanForTopicPages() {
     topicsTracker.reverse();
 
     for (var i = 0; i < topicsTracker.length; i++) {
+        if (isStopped) {
+            break;
+        }
+
         $.ajax({
             url : topicsTracker[i],
             success : function (source) {
@@ -445,6 +451,10 @@ function asyncScanTopicsForGifts() {
     topicsPagesTracker.reverse();
 
     for (var i = 0; i < topicsPagesTracker.length; i++) {
+        if (isStopped) {
+            break;
+        }
+
         $.ajax({
             url : topicsPagesTracker[i],
             success : function (source) {
@@ -563,8 +573,9 @@ function displayGiftCard(url, source) {
     gameImgUrl.href = url;
 
     var gameImg = document.createElement("img");
-    gameImg.setAttribute("style", "display:block; margin:0 auto; padding:5px; width:292px; height:136px; border-radius: 10px;");
     gameImg.src = giftGameImage;
+    gameImg.setAttribute("onError", "this.onError=null; this.src='https://raw.githubusercontent.com/KodekPL/SteamGiftCollector/master/missingImage.png';");
+    gameImg.setAttribute("style", "display:block; margin:0 auto; padding:5px; width:292px; height:136px; border-radius: 10px;");
 
     gameImgUrl.appendChild(gameImg);
 
@@ -979,70 +990,22 @@ function updateDisplayCollection() {
 }
 
 //////
-// RUNTIME: Refresh collected gifts and collect again
+// RUNTIME: Stop collecting gifts
 //////
-function refreshCollection() {
-    if (isRefreshing) {
-        return;
-    }
+function stopCollection() {
+    isStopped = true;
 
-    isRefreshing = true;
-
-    // Copy tracked gifts without valid gifts
-    var copyGiftsTracker = [];
-
-    for(var i = 0; i < giftsTracker.length; i++) {
-        if (!containsString(validGiftsTracker, giftsTracker[i])) {
-            copyGiftsTracker.push(giftsTracker[i]);
-        }
-    }
-
-    // Replace tracked gifts with array without valid gifts
-    giftsTracker = copyGiftsTracker;
-
-    // Reset collecting variables
-    sortedGiftCards = new Array();
-    progressGiftsCount = 0;
-    collectedGiftsCount = 0;
-    collectedValidGiftsCount = 0;
-
-    // Start collecting again
-    asyncCollectTopics();
-
-    // Set title
-    document.title = "Refreshing gifts...";
-
-    // Change refresh button
-    giftsRefreshButton.setAttribute("class", "featured__action");
-    giftsRefreshButton.innerHTML = "<i class=\"fa fa-refresh fa-spin\"></i>";
-
-    // Show progress info
-    giftsLoadingDiv.setAttribute("class", "");
-    giftsLoadingText.innerHTML = " Refreshing gifts...";
-    giftsLoadingText.setAttribute("title", "Valid/Last Valid");
-}
-
-//////
-// RUNTIME: End refresing process
-//////
-function endRefresh() {
-    isRefreshing = false;
-
-    // Reset refresh button
-    giftsRefreshButton.setAttribute("class", "featured__action-button");
-    giftsRefreshButton.innerHTML = "Refresh";
-
-    // Hide progress info
-    giftsLoadingDiv.setAttribute("class", "is-hidden");
-
-    // Set title
-    document.title = "Collecting complete!";
+    endCollecting();
 }
 
 //////
 // UTIL: Collect all gifts urls from given source
 //////
 function trackGiveawayUrls(source, urlsSource) {
+    if (isStopped) {
+        return;
+    }
+
     var extractedUrls = extractUrls(source);
     var hasFakeGift = false;
 
@@ -1140,11 +1103,7 @@ function trackGiveawayUrls(source, urlsSource) {
                         }
                     }
 
-                    if (!isRefreshing) {
-                        giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + "/" + "<font color='#da5d88'>" + fakeGiftsCount + "</font>" + ")";
-                    } else {
-                        giftsLoadingText.innerHTML = " Refreshing gifts... (" + collectedValidGiftsCount + "/" + validGiftsTracker.length + ")";
-                    }
+                    giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + "/" + "<font color='#da5d88'>" + fakeGiftsCount + "</font>" + ")";
                 },
                 complete: function() {
                     if (this.isRepeating) {
@@ -1155,11 +1114,7 @@ function trackGiveawayUrls(source, urlsSource) {
                     collectedGiftsCount++;
 
                     if (collectedGiftsCount >= progressGiftsCount) {
-                        if (!isRefreshing) {
-                            endCollecting();
-                        } else {
-                            endRefresh();
-                        }
+                        endCollecting();
                     }
                 }
             });
@@ -1274,6 +1229,8 @@ function getGiftGameImage(source) {
             return url;
         }
     }
+
+    return "https://raw.githubusercontent.com/KodekPL/SteamGiftCollector/master/missingImage.png";
 }
 
 //////
