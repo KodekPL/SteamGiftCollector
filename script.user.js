@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.10
+// @version     2.10.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -479,6 +479,10 @@ function asyncScanTopicsForGifts() {
 // RUNTIME: Display gift card with given source
 //////
 function displayGiftCard(url, source) {
+    if (isStopped) {
+        return;
+    }
+
     var giftId = getGiftId(url);
 
     if (containsObject(hiddenGifts, giftId)) {
@@ -872,6 +876,10 @@ function displayGiftCard(url, source) {
 // RUNTIME: Display invalid gift card with given source
 //////
 function displayInvalidGiftCard(url, source, reason) {
+    if (isStopped) {
+        return;
+    }
+
     // Extract game title from source
     var gameTitleStartPoint = source.indexOf("table__column__secondary-link");
     var gameTitleEndPoint = gameTitleStartPoint + 64;
