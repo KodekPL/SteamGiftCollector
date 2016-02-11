@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.10.1
+// @version     2.11
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -24,6 +24,7 @@ var invalidHeadingTitleDiv; // Div with invalid gifts count
 var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
 var giftsDisplayButton; // Div with gifts display button
+var giftsVisibilityButton; // Div with gifts visibility display button
 var giftsStopButton; // Div with gifts stop button
 var manualRosterBox; // Text area with manual roster links
 
@@ -46,6 +47,7 @@ var hasCardsGames = []; // Holds steam games ids with cards
 var hasNotCardsGames = []; // Holds steam games ids without cards
 
 var displayMode = 0; // Holds the active display mode for gifts
+var visibilityMode = 0; // Holds the active visibility mode for gifts
 var displayGiftsCount = 0; // Holds amount of gifts that are being displayed
 
 var progressGiftsCount = 0; // Holds amount of gifts that are in progress
@@ -227,8 +229,11 @@ function endCollecting() {
     // Hide progress info
     giftsLoadingDiv.setAttribute("class", "is-hidden");
 
-    // Show display mode button
+    // Show gift display mode button
     giftsDisplayButton.setAttribute("class", "featured__action-button");
+
+    // Show gift visibility mode button
+    giftsVisibilityButton.setAttribute("class", "featured__action-button");
 
     // Hide stop button
     giftsStopButton.setAttribute("class", "featured__action-button is-hidden");
@@ -292,9 +297,20 @@ function prepareGiftCardsContainer() {
     giftsDisplayButton = document.createElement("div");
     giftsDisplayButton.setAttribute("id", "gifts_display_switch");
     giftsDisplayButton.setAttribute("class", "featured__action-button is-hidden");
-    giftsDisplayButton.innerHTML = "All";
+    giftsDisplayButton.setAttribute("title", "Gifts Types");
+    giftsDisplayButton.innerHTML = "All Mode";
     giftsDisplayButton.onclick = function() {
         switchDisplayCollection();
+    };
+
+    // Gifts Visibility Display Button
+    giftsVisibilityButton = document.createElement("div");
+    giftsVisibilityButton.setAttribute("id", "gifts_visibility_switch");
+    giftsVisibilityButton.setAttribute("class", "featured__action-button is-hidden");
+    giftsVisibilityButton.setAttribute("title", "Gifts Visibility");
+    giftsVisibilityButton.innerHTML = "All Gifts";
+    giftsVisibilityButton.onclick = function() {
+        switchGiftsVisibilityCollection();
     };
 
     // Gifts Stop Button
@@ -308,6 +324,7 @@ function prepareGiftCardsContainer() {
 
     validHeadingDiv.appendChild(validHeadingTitleDiv);
     validHeadingDiv.appendChild(giftsDisplayButton);
+    validHeadingDiv.appendChild(giftsVisibilityButton);
     validHeadingDiv.appendChild(giftsStopButton);
 
     // Setup heading for invalid gifts
@@ -518,6 +535,15 @@ function displayGiftCard(url, source) {
     var cardContentDiv = document.createElement("div");
     cardContentDiv.setAttribute("class", "giveaway__column");
     cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; " + (hasJoined ? "opacity:0.4; " : "") + ((giftEntries < 100) ? "background:linear-gradient(#B9D393,#F0F2F5);" : ""));
+
+    // Added joined marker
+    if (hasJoined) {
+        var joinedMakerDiv = document.createElement("div");
+        joinedMakerDiv.setAttribute("id", "has_joined_marker");
+        joinedMakerDiv.setAttribute("class", "is-hidden");
+
+        cardContentDiv.appendChild(joinedMakerDiv);
+    }
 
     // Invite only icon
     if (giftType == 1) {
@@ -940,6 +966,19 @@ function displayInvalidGiftCard(url, source, reason) {
 }
 
 //////
+// RUNTIME: Switch gift visibility mode for collected gifts
+//////
+function switchGiftsVisibilityCollection() {
+    visibilityMode++;
+
+    if (visibilityMode > 1) {
+        visibilityMode = 0;
+    }
+
+    updateDisplayCollection();
+}
+
+//////
 // RUNTIME: Switch display mode for collected gifts
 //////
 function switchDisplayCollection() {
@@ -957,11 +996,17 @@ function switchDisplayCollection() {
 //////
 function updateDisplayCollection() {
     if (displayMode === 0) { // Display All Mode
-        giftsDisplayButton.innerHTML = "All";
+        giftsDisplayButton.innerHTML = "All Mode";
     } else if (displayMode == 1) { // Display Invite Only Mode
-        giftsDisplayButton.innerHTML = "Invite Only";
+        giftsDisplayButton.innerHTML = "Invite Only Mode";
     } else if (displayMode == 2) { // Display Group Only Mode
-        giftsDisplayButton.innerHTML = "Group Only";
+        giftsDisplayButton.innerHTML = "Group Only Mode";
+    }
+
+    if (visibilityMode === 0) { // Display All Mode
+        giftsVisibilityButton.innerHTML = "All Gifts";
+    } else if (visibilityMode == 1) { // Display Only Available Mode
+        giftsVisibilityButton.innerHTML = "Available Gifts";
     }
 
     // Reset display gifts count
@@ -970,26 +1015,35 @@ function updateDisplayCollection() {
     for (var i = 0; i < sortedGiftCards.length; i++) {
         var cardDiv = sortedGiftCards[i]['node'];
         var giftType = getGiftType(cardDiv.innerHTML);
+        var isAvaiable = isAvailable(cardDiv.innerHTML);
 
-        if (displayMode === 0) { // Display All Mode
-            cardDiv.setAttribute("class", "giveaway__column");
+        var hasCounted = false;
 
-            displayGiftsCount++;
-        } else if (displayMode == 1) { // Display Invite Only Mode
-            if (giftType == 1) {
-                cardDiv.setAttribute("class", "giveaway__column");
+        cardDiv.setAttribute("class", "giveaway__column");
+        displayGiftsCount++;
 
-                displayGiftsCount++;
-            } else {
+        if (visibilityMode == 1 && !isAvaiable) {
+            cardDiv.setAttribute("class", "giveaway__column is-hidden");
+
+            displayGiftsCount--;
+            hasCounted = true;
+        }
+
+        if (displayMode == 1) { // Display Invite Only Mode
+            if (giftType != 1) {
                 cardDiv.setAttribute("class", "giveaway__column is-hidden");
+
+                if (!hasCounted) {
+                    displayGiftsCount--;
+                }
             }
         } else if (displayMode == 2) { // Display Group Only Mode
-            if (giftType == 2) {
-                cardDiv.setAttribute("class", "giveaway__column");
-
-                displayGiftsCount++;
-            } else {
+            if (giftType != 2) {
                 cardDiv.setAttribute("class", "giveaway__column is-hidden");
+
+                if (!hasCounted) {
+                    displayGiftsCount--;
+                }
             }
         }
     }
@@ -1297,6 +1351,13 @@ function getGiftType(source) {
 
     // Unknown type
     return 0;
+}
+
+//////
+// UTIL: Returns if gift is available from given source
+//////
+function isAvailable(source) {
+    return !(source.indexOf("has_joined_marker") > -1);
 }
 
 //////
