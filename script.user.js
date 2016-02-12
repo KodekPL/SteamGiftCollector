@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.11
+// @version     2.11.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -392,6 +392,12 @@ function asyncCollectTopics() {
                 if (forumPagesTrackerCount >= scanPagesCount) {
                     asyncScanForTopicPages();
                 }
+            },
+            error: function (source) {
+                if (!source || source.length < 2) {
+                    $.ajax(this);
+                    return;
+                }
             }
         });
     }
@@ -446,7 +452,8 @@ function asyncScanForTopicPages() {
                         topicsPagesTracker.push(topicPageUrl);
                     }
                 }
-
+            },
+            complete: function (source) {
                 topicsPagesTrackerCount++;
 
                 if (topicsPagesTrackerCount >= topicsTracker.length) {
