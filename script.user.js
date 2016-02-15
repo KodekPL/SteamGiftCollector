@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.11.1
+// @version     2.11.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -16,6 +16,8 @@ var scanPagesCount = 4; // How many forum pages to scan?
 
 var isRunning = false; // Is script in progress?
 var isStopped = false; // Is script stopped?
+
+var ajaxRequests = []; // Holds all ajax requests to be aborted
 
 var giftCardsDiv; // Div with all gift cards
 var invalidGiftCardsDiv; // Div with worth invalid gift cards
@@ -362,7 +364,7 @@ function asyncCollectTopics() {
     forumPagesTrackerCount = 0;
 
     for (var i = 1; i <= scanPagesCount; i++) {
-        $.ajax({
+        var ajaxRequest = $.ajax({
             url : "http://www.steamgifts.com/discussions/search?page=" + i,
             success : function (source) {
                 if (!source || source.length < 2) {
@@ -400,6 +402,8 @@ function asyncCollectTopics() {
                 }
             }
         });
+
+        ajaxRequests.push(ajaxRequest);
     }
 }
 
@@ -421,7 +425,7 @@ function asyncScanForTopicPages() {
             break;
         }
 
-        $.ajax({
+        var ajaxRequest = $.ajax({
             url : topicsTracker[i],
             success : function (source) {
                 if (!source || source.length < 2) {
@@ -461,6 +465,8 @@ function asyncScanForTopicPages() {
                 }
             }
         });
+
+        ajaxRequests.push(ajaxRequest);
     }
 }
 
@@ -479,7 +485,7 @@ function asyncScanTopicsForGifts() {
             break;
         }
 
-        $.ajax({
+        var ajaxRequest = $.ajax({
             url : topicsPagesTracker[i],
             success : function (source) {
                 if (!source || source.length < 2) {
@@ -490,6 +496,8 @@ function asyncScanTopicsForGifts() {
                 trackGiveawayUrls(source, this.url);
             }
         });
+
+        ajaxRequests.push(ajaxRequest);
 
         console.log("Checked page " + i + "...");
     }
@@ -1064,6 +1072,10 @@ function updateDisplayCollection() {
 function stopCollection() {
     isStopped = true;
 
+    for (var i = 0; i < ajaxRequests.length; i++) {
+        ajaxRequests[i].abort();
+    }
+
     endCollecting();
 }
 
@@ -1128,7 +1140,7 @@ function trackGiveawayUrls(source, urlsSource) {
 
             progressGiftsCount++;
 
-            $.ajax({
+            var ajaxRequest = $.ajax({
                 url: url,
                 isRepeating: false,
                 repeatCount: 0,
@@ -1187,6 +1199,8 @@ function trackGiveawayUrls(source, urlsSource) {
                     }
                 }
             });
+
+            ajaxRequests.push(ajaxRequest);
         }
     }
 }
