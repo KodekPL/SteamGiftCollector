@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.11.2
+// @version     2.12
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -332,7 +332,6 @@ function prepareGiftCardsContainer() {
     // Setup heading for invalid gifts
     var invalidHeadingDiv = document.createElement("div");
     invalidHeadingDiv.setAttribute("class", "page__heading");
-    invalidHeadingDiv.setAttribute("style", "margin:0px 32px;");
 
     invalidHeadingTitleDiv = document.createElement("div");
     invalidHeadingTitleDiv.setAttribute("id", "invalid_gifts_count");
@@ -344,7 +343,7 @@ function prepareGiftCardsContainer() {
     // Setup invalid gift cards div
     invalidGiftCardsDiv = document.createElement("div");
     invalidGiftCardsDiv.setAttribute("class", "giveaway__columns");
-    invalidGiftCardsDiv.setAttribute("style", "display:block; text-align:center;");
+    invalidGiftCardsDiv.setAttribute("style", "display:block; text-align:center; margin-right:28px;");
 
     // Apply content
     contentDiv.appendChild(giftsLoadingDiv);
@@ -926,17 +925,21 @@ function displayInvalidGiftCard(url, source, reason) {
     var gameTitleEndPoint = gameTitleStartPoint + 64;
     var giftGameTitle = source.substring(gameTitleStartPoint, gameTitleEndPoint).split(">")[1].split("<")[0];
 
+    if (giftGameTitle == null || giftGameTitle.length == 0) {
+        giftGameTitle = "-";
+    }
+
     var topicTitle = topicsTitlesTracker[giftsTopicsTracker[url]];
 
     // Create card
     var cardContentDiv = document.createElement("div");
     cardContentDiv.setAttribute("class", "giveaway__column");
-    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px;");
+    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; width:100%;");
 
     // Add game title to card
     var gameTitleDiv = document.createElement("div");
     gameTitleDiv.setAttribute("class", "featured__heading__medium");
-    gameTitleDiv.setAttribute("style", "text-align:center; font-size:16px;");
+    gameTitleDiv.setAttribute("style", "text-align:left; font-size:16px; width:100%; display:inline-block; float:left; position:relative; top:12px;");
 
     var gameTitleUrl = document.createElement("a");
     gameTitleUrl.href = url;
@@ -950,7 +953,7 @@ function displayInvalidGiftCard(url, source, reason) {
     // Add info div for reason
     var giftInfoDiv = document.createElement("div");
     giftInfoDiv.setAttribute("class", "featured__column");
-    giftInfoDiv.setAttribute("style", "text-align:center;");
+    giftInfoDiv.setAttribute("style", "text-align:left; float:left; display:inline-block; position:relative; top:4px; left:-8px;");
 
     cardContentDiv.appendChild(giftInfoDiv);
 
@@ -964,12 +967,13 @@ function displayInvalidGiftCard(url, source, reason) {
     var giftTopicButtonDiv = document.createElement("div");
     giftTopicButtonDiv.setAttribute("class", "sidebar__action-button");
     giftTopicButtonDiv.setAttribute("onclick", "window.open(\"" + giftsTopicsTracker[url] + "\", \"_blank\")");
+    giftTopicButtonDiv.setAttribute("style", "float:right; display:inline-block; position:relative; top:-7px;");
     if (!topicTitle) {
         giftTopicButtonDiv.innerHTML = "Open source";
     } else {
         // Cut topic title if too long
-        if (topicTitle.length > 23) {
-            topicTitle = topicTitle.substring(0, 23) + "...";
+        if (topicTitle.length > 45) {
+            topicTitle = topicTitle.substring(0, 42) + "...";
         }
 
         giftTopicButtonDiv.innerHTML = topicTitle;
@@ -1277,11 +1281,6 @@ function getInvalidGiftReason(source) {
     // No Permission - Steam Group
     if (source.indexOf("You do not have permission") > -1 && source.indexOf("Steam group") > -1) {
         return "No Permission (Steam Group)";
-    }
-
-    // No Permission - Blacklisted
-    if (source.indexOf("blacklist") > -1) {
-        return "No Permission (Blacklisted)";
     }
 
     return null;
