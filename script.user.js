@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.12
+// @version     2.12.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -287,7 +287,6 @@ function prepareGiftCardsContainer() {
     // Setup heading for valid gifts
     var validHeadingDiv = document.createElement("div");
     validHeadingDiv.setAttribute("class", "page__heading");
-    validHeadingDiv.setAttribute("style", "margin:0px 32px;");
 
     // Valid Heading Title
     validHeadingTitleDiv = document.createElement("div");
@@ -967,7 +966,7 @@ function displayInvalidGiftCard(url, source, reason) {
     var giftTopicButtonDiv = document.createElement("div");
     giftTopicButtonDiv.setAttribute("class", "sidebar__action-button");
     giftTopicButtonDiv.setAttribute("onclick", "window.open(\"" + giftsTopicsTracker[url] + "\", \"_blank\")");
-    giftTopicButtonDiv.setAttribute("style", "float:right; display:inline-block; position:relative; top:-7px;");
+    giftTopicButtonDiv.setAttribute("style", "float:right; display:inline-block; position:relative; top:-8px;");
     if (!topicTitle) {
         giftTopicButtonDiv.innerHTML = "Open source";
     } else {
