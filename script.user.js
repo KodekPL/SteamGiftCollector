@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.12.1
+// @version     2.13
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -21,8 +21,10 @@ var ajaxRequests = []; // Holds all ajax requests to be aborted
 
 var giftCardsDiv; // Div with all gift cards
 var invalidGiftCardsDiv; // Div with worth invalid gift cards
+var sgtoolsGiftCardsDiv; // Div with sgtools gift cards
 var validHeadingTitleDiv; // Div with valid gifts count
 var invalidHeadingTitleDiv; // Div with invalid gifts count
+var sgtoolsHeadingTitleDiv; // Div with sg tools gifts count
 var giftsLoadingDiv; // Div with collecting information
 var giftsLoadingText; // Div with progress text
 var giftsDisplayButton; // Div with gifts display button
@@ -56,6 +58,7 @@ var progressGiftsCount = 0; // Holds amount of gifts that are in progress
 var collectedGiftsCount = 0; // Holds amount of collected gifts
 var collectedValidGiftsCount = 0; // Holds amount of collected valid gifts
 var collectedInvalidGiftsCount = 0; // Holds amount of collected invalid gifts
+var collectedSgtoolsGiftsCount = 0; // Holds amount of collected sgtools gifts
 var fakeGiftsCount = 0; // Holds amount of fake gifts detected
 
 //////
@@ -344,12 +347,30 @@ function prepareGiftCardsContainer() {
     invalidGiftCardsDiv.setAttribute("class", "giveaway__columns");
     invalidGiftCardsDiv.setAttribute("style", "display:block; text-align:center; margin-right:28px;");
 
+    // Setup heading for sgtools gifts
+    var sgtoolsHeadingDiv = document.createElement("div");
+    sgtoolsHeadingDiv.setAttribute("class", "page__heading");
+
+    sgtoolsHeadingTitleDiv = document.createElement("div");
+    sgtoolsHeadingTitleDiv.setAttribute("id", "sgtools_gifts_count");
+    sgtoolsHeadingTitleDiv.setAttribute("class", "page__heading__breadcrumbs");
+    sgtoolsHeadingTitleDiv.innerHTML = "SGTools Gifts (0)";
+
+    sgtoolsHeadingDiv.appendChild(sgtoolsHeadingTitleDiv);
+
+    // Setup invalid gift cards div
+    sgtoolsGiftCardsDiv = document.createElement("div");
+    sgtoolsGiftCardsDiv.setAttribute("class", "giveaway__columns");
+    sgtoolsGiftCardsDiv.setAttribute("style", "display:block; text-align:center; margin-right:28px;");
+
     // Apply content
     contentDiv.appendChild(giftsLoadingDiv);
     contentDiv.appendChild(validHeadingDiv);
     contentDiv.appendChild(giftCardsDiv);
     contentDiv.appendChild(invalidHeadingDiv);
     contentDiv.appendChild(invalidGiftCardsDiv);
+    contentDiv.appendChild(sgtoolsHeadingDiv);
+    contentDiv.appendChild(sgtoolsGiftCardsDiv);
 }
 
 //////
@@ -984,6 +1005,61 @@ function displayInvalidGiftCard(url, source, reason) {
 }
 
 //////
+// RUNTIME: Display sgtools gift card with given source
+//////
+function displaySgtoolsGiftCard(url) {
+    if (isStopped) {
+        return;
+    }
+
+    var topicTitle = topicsTitlesTracker[giftsTopicsTracker[url]];
+    var topicUrl = giftsTopicsTracker[url];
+
+    // Create card
+    var cardContentDiv = document.createElement("div");
+    cardContentDiv.setAttribute("class", "giveaway__column");
+    cardContentDiv.setAttribute("style", "display:inline-block; margin:5px; width:100%;");
+
+    // Add game title to card
+    var topicTitleDiv = document.createElement("div");
+    topicTitleDiv.setAttribute("class", "featured__heading__medium");
+    topicTitleDiv.setAttribute("style", "text-align:left; font-size:16px; width:100%; display:inline-block; float:left; position:relative; top:12px;");
+
+    var topicTitleUrl = document.createElement("a");
+    topicTitleUrl.href = topicUrl;
+    topicTitleUrl.target = "_blank";
+    topicTitleUrl.innerHTML = topicTitle;
+
+    topicTitleDiv.appendChild(topicTitleUrl);
+
+    cardContentDiv.appendChild(topicTitleDiv);
+
+    // Add info div for reason
+    var giftInfoDiv = document.createElement("div");
+    giftInfoDiv.setAttribute("class", "featured__column");
+    giftInfoDiv.setAttribute("style", "text-align:left; float:left; display:inline-block; position:relative; top:4px; left:-8px;");
+
+    cardContentDiv.appendChild(giftInfoDiv);
+
+    var giftReasonText = document.createElement("span");
+    giftReasonText.setAttribute("style", "color:#6B7A8C;");
+    giftReasonText.innerHTML = "???";
+
+    giftInfoDiv.appendChild(giftReasonText);
+
+    // Add button to the topic
+    var giftTopicButtonDiv = document.createElement("div");
+    giftTopicButtonDiv.setAttribute("class", "sidebar__action-button");
+    giftTopicButtonDiv.setAttribute("onclick", "window.open(\"" + url + "\", \"_blank\")");
+    giftTopicButtonDiv.setAttribute("style", "float:right; display:inline-block; position:relative; top:-8px;");
+    giftTopicButtonDiv.innerHTML = "Open SGTools";
+
+    cardContentDiv.appendChild(giftTopicButtonDiv);
+
+    sgtoolsGiftCardsDiv.appendChild(cardContentDiv);
+}
+
+//////
 // RUNTIME: Switch gift visibility mode for collected gifts
 //////
 function switchGiftsVisibilityCollection() {
@@ -1102,7 +1178,7 @@ function trackGiveawayUrls(source, urlsSource) {
 
         var url = extractedUrls[i];
 
-        // Look for giveaway on steamgift that not already tracked
+        // Look for giveaway on steamgift that is not already tracked
         if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0) {
             // Count amount of slashes in url
             var urlParts = (url.match(/\//g) || []).length;
@@ -1204,6 +1280,32 @@ function trackGiveawayUrls(source, urlsSource) {
             });
 
             ajaxRequests.push(ajaxRequest);
+        }
+
+        // Look for sgtools that is not already tracked (disabled)
+        if (false && url.indexOf("/giveaways/") >= 0 && url.indexOf("sgtools.info") >= 0) {
+            if (containsString(giftsTracker, url)) {
+                continue;
+            }
+
+            giftsTracker.push(url);
+
+            // Add gift source
+            giftsTopicsTracker[url] = urlsSource;
+
+            // Add topic title (if is topic) - extract topic title from source
+            if (urlsSource.indexOf("/discussion/") >= 0) {
+                var topicTitleStartPoint = source.indexOf("<title>") + 7;
+                var topicTitleEndPoint = source.indexOf("</title>");
+                var topicTitle = source.substring(topicTitleStartPoint, topicTitleEndPoint);
+
+                topicsTitlesTracker[urlsSource] = topicTitle;
+            }
+
+            collectedSgtoolsGiftsCount++;
+            sgtoolsHeadingTitleDiv.innerHTML = "SGTools Gifts (" + collectedSgtoolsGiftsCount + ")";
+
+            displaySgtoolsGiftCard(url);
         }
     }
 }
