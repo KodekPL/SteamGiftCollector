@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.12.1
+// @version     2.12.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -17,6 +17,8 @@ var scanPagesCount = 4; // How many forum pages to scan?
 var isRunning = false; // Is script in progress?
 var isStopped = false; // Is script stopped?
 
+var collectingStartTime = 0; // Holds start time of collecting
+
 var ajaxRequests = []; // Holds all ajax requests to be aborted
 
 var giftCardsDiv; // Div with all gift cards
@@ -28,6 +30,7 @@ var giftsLoadingText; // Div with progress text
 var giftsDisplayButton; // Div with gifts display button
 var giftsVisibilityButton; // Div with gifts visibility display button
 var giftsStopButton; // Div with gifts stop button
+var collectingTimeDiv; // Div with finish collecting time
 var manualRosterBox; // Text area with manual roster links
 
 var soundComplete; // Holds audio of complete sound
@@ -218,6 +221,8 @@ function startCollecting() {
 
     isRunning = true;
 
+    collectingStartTime = new Date().getTime();
+
     console.log("Collecting started (" + GM_info.script.version + ")...");
 
     prepareGiftCardsContainer();
@@ -228,6 +233,13 @@ function startCollecting() {
 // RUNTIME: End collecting process
 //////
 function endCollecting() {
+    // Show collecting time
+    var collectingEndTime = new Date().getTime();
+    var collectingSecs = Math.floor((collectingEndTime - collectingStartTime) / 1000.0);
+    var collectingMilis = (collectingEndTime - collectingStartTime) - (collectingSecs * 1000);
+
+    collectingTimeDiv.innerHTML = "Collecting took " + collectingSecs + "." + collectingMilis + " seconds.";
+
     // Hide progress info
     giftsLoadingDiv.setAttribute("class", "is-hidden");
 
@@ -344,12 +356,17 @@ function prepareGiftCardsContainer() {
     invalidGiftCardsDiv.setAttribute("class", "giveaway__columns");
     invalidGiftCardsDiv.setAttribute("style", "display:block; text-align:center; margin-right:28px;");
 
+    // Setup collecting time div
+    collectingTimeDiv = document.createElement("div");
+    collectingTimeDiv.setAttribute("style", "display:block; margin-top:13px; text-align:center; color:#A9B4CB; font:bold 11px/29px Arial,sans-serif;");
+
     // Apply content
     contentDiv.appendChild(giftsLoadingDiv);
     contentDiv.appendChild(validHeadingDiv);
     contentDiv.appendChild(giftCardsDiv);
     contentDiv.appendChild(invalidHeadingDiv);
     contentDiv.appendChild(invalidGiftCardsDiv);
+    contentDiv.appendChild(collectingTimeDiv);
 }
 
 //////
@@ -1102,7 +1119,7 @@ function trackGiveawayUrls(source, urlsSource) {
 
         var url = extractedUrls[i];
 
-        // Look for giveaway on steamgift that not already tracked
+        // Look for giveaway on steamgift that is not already tracked
         if (url.indexOf("/giveaway/") >= 0 && url.indexOf("steamgifts.com") >= 0) {
             // Count amount of slashes in url
             var urlParts = (url.match(/\//g) || []).length;
