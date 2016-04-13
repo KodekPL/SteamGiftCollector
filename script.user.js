@@ -4,11 +4,11 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.13.1
+// @version     2.14
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
-// @grant       none
+// @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
 // Settings
@@ -543,6 +543,51 @@ function asyncScanTopicsForGifts() {
 }
 
 //////
+// RUNTIME: Collect steam cards data
+//////
+function asyncCheckForSteamCards(steamId) {
+    if (containsObject(hasCardsGames, steamId)) {
+        return;
+    }
+
+    GM_xmlhttpRequest({
+        method: "GET",
+        timeout: 10000,
+        url: "http://store.steampowered.com/api/appdetails?filters=categories&appids=" + steamId,
+        onload: function(data) {
+            var jsonObject = JSON.parse(data.responseText)[steamId].data;
+
+            if(jsonObject != null) {
+                jsonObject = jsonObject.categories;
+
+                if(jsonObject != null) {
+                    for(i = 0; i < jsonObject.length; i++) {
+                        if(jsonObject[i].id == "29") {
+                            hasCardsGames.push(steamId);
+
+                            for (var i2 = hasNotCardsGames.length - 1; i2 >= 0; i2--) {
+                                if (hasNotCardsGames[i2] == steamId) {
+                                    hasNotCardsGames.splice(i, 1);
+                                    break;
+                                }
+                            }
+
+                            saveHasCardsArray();
+                            updateCardsGamesDisplay();
+                            break;
+                        }
+                    }
+
+                    hasNotCardsGames.push(steamId);
+                    saveHasCardsArray();
+                    updateCardsGamesDisplay();
+                }
+            }
+        }
+    });
+}
+
+//////
 // RUNTIME: Display gift card with given source
 //////
 function displayGiftCard(url, source) {
@@ -570,6 +615,8 @@ function displayGiftCard(url, source) {
     var hasJoined = hasJoinedGift(source);
     var steamPage = getSteamPage(source);
     var steamId = getSteamId(source);
+
+    asyncCheckForSteamCards(steamId);
 
     // Get gift sort data
     var sortValue = 0;
@@ -946,6 +993,39 @@ function displayGiftCard(url, source) {
     }
 
     updateDisplayCollection();
+}
+
+//////
+// RUNTIME: Update display of cards in gifts
+//////
+function updateCardsGamesDisplay() {
+    var allDivElements = document.getElementsByTagName('div');
+
+    for (var i = 0; i < allDivElements.length; i++) {
+        if (allDivElements[i].getAttribute("id") != "hasCardsButton" || allDivElements[i].getAttribute("id") != "hasNotCardsButton") {
+            continue;
+        }
+
+        if (containsObject(hasCardsGames, allDivElements[i].getAttribute("steamid"))) {
+            if (allDivElements[i].getAttribute("id") == "hasCardsButton") {
+                allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#67C7CF 0px, #52B1C2 8px, #399AA6 100%);");
+            }
+
+            if (allDivElements[i].getAttribute("id") == "hasNotCardsButton") {
+                allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+            }
+        }
+
+        if (containsObject(hasNotCardsGames, allDivElements[i].getAttribute("steamid"))) {
+            if (allDivElements[i].getAttribute("id") == "hasNotCardsButton") {
+                allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#9567CF 0px, #8C52C2 8px, #6D39A6 100%);");
+            }
+
+            if (allDivElements[i].getAttribute("id") == "hasCardsButton") {
+                allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+            }
+        }
+    }
 }
 
 //////
