@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.13
+// @version     2.13.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -216,7 +216,7 @@ function loadLikedGamesArray() {
 // RUNTIME: Track manual roster
 //////
 function trackManualRoster() {
-    trackGiveawayUrls(localStorage.sgc_manualRoster, "http://www.steamgifts.com/");
+    trackGiveawayUrls(localStorage.sgc_manualRoster, "https://www.steamgifts.com/");
 }
 
 //////
@@ -402,7 +402,7 @@ function asyncCollectTopics() {
 
     for (var i = 1; i <= scanPagesCount; i++) {
         var ajaxRequest = $.ajax({
-            url : "http://www.steamgifts.com/discussions/search?page=" + i,
+            url : "https://www.steamgifts.com/discussions/search?page=" + i,
             pageCount : i,
             success : function (source) {
                 if (!source || source.length < 2) {
@@ -413,7 +413,7 @@ function asyncCollectTopics() {
                 console.log("Received discussions page #" + this.pageCount + "...");
 
                 // Replace hrefs with site domain to extract topic urls easier
-                var fixSource = source.replace(/href="/g, "http://www.steamgifts.com");
+                var fixSource = source.replace(/href="/g, "https://www.steamgifts.com");
                 var extractedUrls = extractUrls(fixSource);
 
                 for (var i = 0; i < extractedUrls.length; i++) {
@@ -1146,6 +1146,11 @@ function trackGiveawayUrls(source, urlsSource) {
                 url = url.split("/", 5).join("/") + "/";
             }
 
+            // Turn http to https
+            if (url.indexOf("https") <= -1) {
+                url = url.substr(0, 4) + "s" + url.substr(4);
+            }
+
             if (containsString(giftsTracker, url)) {
                 continue;
             }
@@ -1344,7 +1349,7 @@ function getGiftGameImage(source) {
         var url = extractedUrls[i];
 
         // Look for image with steam domain and header
-        if (url.indexOf(".jpg") >= 0 && url.indexOf("steamstatic.com") >= 0 && url.indexOf("header") >= 0) {
+        if (url.indexOf(".jpg") >= 0 && url.indexOf("steamcdn-a.akamaihd.net") >= 0 && url.indexOf("header") >= 0) {
             return url;
         }
     }
