@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.14
+// @version     2.14.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -255,6 +255,8 @@ function startCollecting() {
 // RUNTIME: End collecting process
 //////
 function endCollecting() {
+    updateCardsGamesDisplay();
+
     // Show collecting time
     var collectingEndTime = new Date().getTime();
     var collectingSecs = Math.floor((collectingEndTime - collectingStartTime) / 1000.0);
@@ -565,22 +567,19 @@ function asyncCheckForSteamCards(steamId) {
                         if(jsonObject[i].id == "29") {
                             hasCardsGames.push(steamId);
 
-                            for (var i2 = hasNotCardsGames.length - 1; i2 >= 0; i2--) {
-                                if (hasNotCardsGames[i2] == steamId) {
-                                    hasNotCardsGames.splice(i, 1);
-                                    break;
-                                }
+                            if (containsObject(hasNotCardsGames, steamId)) {
+                                hasNotCardsGames.splice(hasNotCardsGames.indexOf(steamId), 1);
                             }
 
                             saveHasCardsArray();
-                            updateCardsGamesDisplay();
                             break;
                         }
                     }
+                }
 
+                if (!containsObject(hasNotCardsGames, steamId)) {
                     hasNotCardsGames.push(steamId);
                     saveHasCardsArray();
-                    updateCardsGamesDisplay();
                 }
             }
         }
@@ -616,6 +615,7 @@ function displayGiftCard(url, source) {
     var steamPage = getSteamPage(source);
     var steamId = getSteamId(source);
 
+    // Check steam cards for game
     asyncCheckForSteamCards(steamId);
 
     // Get gift sort data
@@ -1002,26 +1002,29 @@ function updateCardsGamesDisplay() {
     var allDivElements = document.getElementsByTagName('div');
 
     for (var i = 0; i < allDivElements.length; i++) {
-        if (allDivElements[i].getAttribute("id") != "hasCardsButton" || allDivElements[i].getAttribute("id") != "hasNotCardsButton") {
+        var steamId = allDivElements[i].getAttribute("steamid");
+        var divId = allDivElements[i].getAttribute("id");
+
+        if (divId != "hasCardsButton" && divId != "hasNotCardsButton") {
             continue;
         }
 
-        if (containsObject(hasCardsGames, allDivElements[i].getAttribute("steamid"))) {
-            if (allDivElements[i].getAttribute("id") == "hasCardsButton") {
+        if (containsObject(hasCardsGames, steamId)) {
+            if (divId == "hasCardsButton") {
                 allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#67C7CF 0px, #52B1C2 8px, #399AA6 100%);");
             }
 
-            if (allDivElements[i].getAttribute("id") == "hasNotCardsButton") {
+            if (divId == "hasNotCardsButton") {
                 allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
             }
         }
 
-        if (containsObject(hasNotCardsGames, allDivElements[i].getAttribute("steamid"))) {
-            if (allDivElements[i].getAttribute("id") == "hasNotCardsButton") {
+        if (containsObject(hasNotCardsGames, steamId)) {
+            if (divId == "hasNotCardsButton") {
                 allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#9567CF 0px, #8C52C2 8px, #6D39A6 100%);");
             }
 
-            if (allDivElements[i].getAttribute("id") == "hasCardsButton") {
+            if (divId == "hasCardsButton") {
                 allDivElements[i].setAttribute("style", "width: 41px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
             }
         }
