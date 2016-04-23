@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.14.2
+// @version     2.15
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -47,6 +47,7 @@ var topicsTitlesTracker = {}; // Holds topic title and link it came from
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 
 var hiddenGifts = []; // Holds hidden gifts ids
+var removedProducts = []; // Holds removed steam prodcuts ids
 var likeGames = []; // Holds liked games ids
 var hasCardsGames = []; // Holds steam games ids with cards
 var hasNotCardsGames = []; // Holds steam games ids without cards
@@ -157,6 +158,7 @@ function loadHasCardsArray() {
 //////
 function saveHiddenGiftsArray() {
     localStorage.sgc_hiddenGifts = JSON.stringify(hiddenGifts);
+    localStorage.sgc_removedProducts = JSON.stringify(removedProducts);
 }
 
 //////
@@ -165,11 +167,15 @@ function saveHiddenGiftsArray() {
 function loadHiddenGiftsArray() {
     var hiddenGiftsJson = localStorage.sgc_hiddenGifts;
 
-    if (!hiddenGiftsJson) {
-        return;
+    if (hiddenGiftsJson) {
+        hiddenGifts = JSON.parse(hiddenGiftsJson);
     }
 
-    hiddenGifts = JSON.parse(hiddenGiftsJson);
+    var removedProductsJson = localStorage.sgc_removedProducts;
+
+    if (removedProductsJson) {
+        removedProducts = JSON.parse(removedProductsJson);
+    }
 }
 
 //////
@@ -595,8 +601,9 @@ function displayGiftCard(url, source) {
     }
 
     var giftId = getGiftId(url);
+    var steamId = getSteamId(source);
 
-    if (containsObject(hiddenGifts, giftId)) {
+    if (containsObject(hiddenGifts, giftId) || containsObject(removedProducts, steamId)) {
         return;
     }
 
@@ -613,7 +620,6 @@ function displayGiftCard(url, source) {
     var giftAuthorAvatar = getGiftAuthorAvatar(source);
     var hasJoined = hasJoinedGift(source);
     var steamPage = getSteamPage(source);
-    var steamId = getSteamId(source);
 
     // Check steam cards for game
     asyncCheckForSteamCards(steamId);
@@ -873,41 +879,59 @@ function displayGiftCard(url, source) {
 
     var hideButton = document.createElement("div");
     hideButton.setAttribute("class", "nav__button");
-    if (containsObject(hiddenGifts, giftId)) {
-        hideButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
-    } else {
-        hideButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
-    }
-    hideButton.setAttribute("title", "Hide giveaway?");
+    hideButton.setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+    hideButton.setAttribute("title", "Hide giveaway/product?");
     hideButton.setAttribute("id", "hideGiftButton");
+    hideButton.setAttribute("state", 0);
     hideButton.setAttribute("giftid", giftId);
+    hideButton.setAttribute("steamid", steamId);
     hideButton.onclick = function() {
-        var findAttribute = giftId;
-        var isHidden = false;
+        var findGiftId = giftId;
+        var findSteamId = steamId;
+        var state = 0;
 
-        // Add/Remove element from array
-        if (!containsObject(hiddenGifts, findAttribute)) {
-            hiddenGifts.push(findAttribute);
-            isHidden = true;
-        } else {
-            hiddenGifts.splice(hiddenGifts.indexOf(findAttribute), 1);
-            isHidden = false;
+        var allDivElements = document.getElementsByTagName('div');
+
+        // Find and get gift state
+        for (var i = 0; i < allDivElements.length; i++) {
+            if (allDivElements[i].getAttribute("id") == "hideGiftButton" && allDivElements[i].getAttribute("giftid") == findGiftId) {
+                state = allDivElements[i].getAttribute("state");
+                break;
+            }
+        }
+
+        // Increase state (0 = none, 1 = hidden, 2 = remove)
+        state++;
+
+        if (state >= 3) {
+            state = 0;
+        }
+
+        hiddenGifts.splice(hiddenGifts.indexOf(findGiftId), 1);
+        removedProducts.splice(removedProducts.indexOf(findSteamId), 1);
+
+        if (state == 1) { // Hide
+            hiddenGifts.push(findGiftId);
+        } else if (state == 2) { // Remove
+            removedProducts.push(findSteamId);
         }
 
         saveHiddenGiftsArray();
 
-        var allDivElements = document.getElementsByTagName('div');
-
         // Find and hide gift button div element with gift id
         for (var i = 0; i < allDivElements.length; i++) {
-            if (allDivElements[i].getAttribute("id") == "hideGiftButton" && allDivElements[i].getAttribute("giftid") == findAttribute) {
-                if (isHidden) {
-                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
-                } else {
+            if (allDivElements[i].getAttribute("id") == "hideGiftButton") {
+                if (state == 0 && allDivElements[i].getAttribute("steamid") == findSteamId) {
                     allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CFCFCF 0px, #BABABA 8px, #A3A3A3 100%);");
+                    allDivElements[i].setAttribute("state", state);
+                } else if (state == 1 && allDivElements[i].getAttribute("giftid") == findGiftId) {
+                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CFC767 0px, #C2B452 8px, #A69E39 100%);");
+                    allDivElements[i].setAttribute("state", state);
+                    break;
+                } else if (state == 2 && allDivElements[i].getAttribute("steamid") == findSteamId) {
+                    allDivElements[i].setAttribute("style", "width: 14px; background-image: linear-gradient(#CF6767 0px, #C25252 8px, #A63939 100%);");
+                    allDivElements[i].setAttribute("state", state);
                 }
-
-                break;
             }
         }
     }
