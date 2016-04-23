@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.15.2
+// @version     2.16
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -47,10 +47,11 @@ var topicsTitlesTracker = {}; // Holds topic title and link it came from
 var sortedGiftCards = new Array(); // Holds sorted by time valid gifts
 
 var hiddenGifts = []; // Holds hidden gifts ids
-var removedProducts = []; // Holds removed steam prodcuts ids
+var removedGames = []; // Holds removed steam games ids
 var likeGames = []; // Holds liked games ids
 var hasCardsGames = []; // Holds steam games ids with cards
 var hasNotCardsGames = []; // Holds steam games ids without cards
+var collectedValidGifts = {}; // Holds valid gifts ids and source urls
 var fakeGifts = []; // Holds fake gifts ids
 
 var displayMode = 0; // Holds the active display mode for gifts
@@ -86,7 +87,8 @@ $(document).ready(function() {
         });
 
         loadHasCardsArray();
-        loadHiddenGiftsArray();
+        loadHiddenGiftsArrays();
+        loadCollectedValidArray();
         loadFakeGiftsArray();
         loadLikedGamesArray();
         saveManualRoster();
@@ -156,26 +158,46 @@ function loadHasCardsArray() {
 //////
 // RUNTIME: Save hidden gifts array
 //////
-function saveHiddenGiftsArray() {
+function saveHiddenGiftsArrays() {
     localStorage.sgc_hiddenGifts = JSON.stringify(hiddenGifts);
-    localStorage.sgc_removedProducts = JSON.stringify(removedProducts);
+    localStorage.sgc_removedGames = JSON.stringify(removedGames);
 }
 
 //////
 // RUNTIME: Load hidden gifts array
 //////
-function loadHiddenGiftsArray() {
+function loadHiddenGiftsArrays() {
     var hiddenGiftsJson = localStorage.sgc_hiddenGifts;
 
     if (hiddenGiftsJson) {
         hiddenGifts = JSON.parse(hiddenGiftsJson);
     }
 
-    var removedProductsJson = localStorage.sgc_removedProducts;
+    var removedGamesJson = localStorage.sgc_removedGames;
 
-    if (removedProductsJson) {
-        removedProducts = JSON.parse(removedProductsJson);
+    if (removedGamesJson) {
+        removedGames = JSON.parse(removedGamesJson);
     }
+}
+
+//////
+// RUNTIME: Save collected valid gifts array
+//////
+function saveCollectedValidGiftsArray() {
+    localStorage.sgc_collectedValidGifts = JSON.stringify(collectedValidGifts);
+}
+
+//////
+// RUNTIME: Load collected valid gifts array
+//////
+function loadCollectedValidArray() {
+    var collectedValidJson = localStorage.sgc_collectedValidGifts;
+
+    if (!collectedValidJson) {
+        return;
+    }
+
+    collectedValidGifts = JSON.parse(collectedValidJson);
 }
 
 //////
@@ -216,6 +238,17 @@ function loadLikedGamesArray() {
     }
 
     likeGames = JSON.parse(likeGamesJson);
+}
+
+//////
+// RUNTIME: Track saved collected valid gifts
+//////
+function trackCollectedValidGifts() {
+    for (var giftId in collectedValidGifts) {
+        var sourceUrl = collectedValidGifts[giftId];
+
+        trackGiveawayUrls("https://www.steamgifts.com/giveaway/" + giftId + "/", sourceUrl);
+    }
 }
 
 //////
@@ -548,6 +581,7 @@ function asyncScanTopicsForGifts() {
     console.log("Completed collecting informations!");
 
     trackManualRoster();
+    trackCollectedValidGifts();
 }
 
 //////
@@ -607,7 +641,7 @@ function displayGiftCard(url, source) {
     var giftId = getGiftId(url);
     var steamId = getSteamId(source);
 
-    if (containsObject(hiddenGifts, giftId) || containsObject(removedProducts, steamId)) {
+    if (containsObject(hiddenGifts, giftId) || containsObject(removedGames, steamId)) {
         return;
     }
 
@@ -914,17 +948,17 @@ function displayGiftCard(url, source) {
         if (containsObject(hiddenGifts, findGiftId)) {
             hiddenGifts.splice(hiddenGifts.indexOf(findGiftId), 1);
         }
-        if (containsObject(removedProducts, findSteamId)) {
-            removedProducts.splice(removedProducts.indexOf(findSteamId), 1);
+        if (containsObject(removedGames, findSteamId)) {
+            removedGames.splice(removedGames.indexOf(findSteamId), 1);
         }
 
         if (state == 1) { // Hide
             hiddenGifts.push(findGiftId);
         } else if (state == 2) { // Remove
-            removedProducts.push(findSteamId);
+            removedGames.push(findSteamId);
         }
 
-        saveHiddenGiftsArray();
+        saveHiddenGiftsArrays();
 
         // Find and hide gift button div element with gift id
         for (var i = 0; i < allDivElements.length; i++) {
@@ -1333,6 +1367,11 @@ function trackGiveawayUrls(source, urlsSource) {
                             validGiftsTracker.push(this.url);
                         }
 
+                        if (!(giftId in collectedValidGifts)) {
+                            collectedValidGifts[giftId] = urlsSource;
+                            saveCollectedValidGiftsArray();
+                        }
+
                         displayGiftCard(this.url, source);
                     } else {
                         collectedInvalidGiftsCount++;
@@ -1342,6 +1381,11 @@ function trackGiveawayUrls(source, urlsSource) {
 
                         if (invalidGiftReason !== null) {
                             displayInvalidGiftCard(this.url, source, invalidGiftReason);
+                        }
+
+                        if (giftId in collectedValidGifts) {
+                            delete collectedValidGifts[giftId];
+                            saveCollectedValidGiftsArray();
                         }
                     }
 
