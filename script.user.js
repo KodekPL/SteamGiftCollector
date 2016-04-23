@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.15
+// @version     2.15.1
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -907,8 +907,12 @@ function displayGiftCard(url, source) {
             state = 0;
         }
 
-        hiddenGifts.splice(hiddenGifts.indexOf(findGiftId), 1);
-        removedProducts.splice(removedProducts.indexOf(findSteamId), 1);
+        if (containsObject(hiddenGifts, findGiftId)) {
+            hiddenGifts.splice(hiddenGifts.indexOf(findGiftId), 1);
+        }
+        if (containsObject(removedProducts, findSteamId)) {
+            removedProducts.splice(removedProducts.indexOf(findSteamId), 1);
+        }
 
         if (state == 1) { // Hide
             hiddenGifts.push(findGiftId);
