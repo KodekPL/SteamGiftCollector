@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.15.1
+// @version     2.15.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -562,8 +562,12 @@ function asyncCheckForSteamCards(steamId) {
         method: "GET",
         timeout: 10000,
         url: "http://store.steampowered.com/api/appdetails?filters=categories&appids=" + steamId,
-        onload: function(data) {
-            var jsonObject = JSON.parse(data.responseText)[steamId].data;
+        onload: function(source) {
+            if (!source) {
+                return;
+            }
+
+            var jsonObject = JSON.parse(source.responseText)[steamId].data;
 
             if(jsonObject != null) {
                 jsonObject = jsonObject.categories;
