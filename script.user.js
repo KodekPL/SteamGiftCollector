@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.16.1
+// @version     2.16.2
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -1663,7 +1663,7 @@ function getGiftTime(source) {
     var timeEndPoint = source.indexOf("remaining");
 
     if (timeEndPoint == -1) {
-        return "NULL";
+        return ["Uknown", "Unknown"];
     }
 
     // Get start point of time data
@@ -1675,8 +1675,17 @@ function getGiftTime(source) {
     // Get end time result from split string
     endTime = splitTimeString[4];
 
+    if (endTime == null) {
+        endTime = "Unknown"
+    }
+
     // Get remaning time result
     remainingTime = splitTimeString[5];
+
+    if (remainingTime == null) {
+        remainingTime = " Unknown"
+    }
+
     remainingTime = remainingTime.substring(1, remainingTime.length);
     remainingTime += "remaining";
 
