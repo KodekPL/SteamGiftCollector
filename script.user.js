@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.16.2
+// @version     2.16.3
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -664,7 +664,7 @@ function displayGiftCard(url, source) {
 
     // Get gift sort data
     var sortValue = 0;
-    sortValue += convertRemainingToInt(giftTime[1]);
+    sortValue += convertRemainingToInt(giftTime);
     sortValue += giftGameTitle.charCodeAt(0);
 
     // Prepare gift data
@@ -1030,7 +1030,6 @@ function displayGiftCard(url, source) {
     giftTimeIcon.setAttribute("style", "color:#6B7A8C;");
 
     var giftTimeText = document.createElement("span");
-    giftTimeText.setAttribute("title", giftTime[0]);
     giftTimeText.setAttribute("style", "color:#6B7A8C;");
     giftTimeText.innerHTML = " " + giftTime[1];
 
@@ -1359,7 +1358,9 @@ function trackGiveawayUrls(source, urlsSource) {
 
                     trackGiveawayUrls(source, this.url);
 
-                    if (isGiftValid(source)) {
+                    giftValidationCode = isGiftValid(source)
+
+                    if (giftValidationCode >= 0) {
                         collectedValidGiftsCount++;
                         validHeadingTitleDiv.innerHTML = "Valid Gifts (" + collectedValidGiftsCount + "/" + collectedValidGiftsCount + ")";
 
@@ -1389,6 +1390,8 @@ function trackGiveawayUrls(source, urlsSource) {
                         }
                     }
 
+                    console.log("Validated gift with code: " + giftValidationCode + " (" + this.url + ").");
+
                     giftsLoadingText.innerHTML = " Collecting gifts... (" + collectedValidGiftsCount + "/" + collectedGiftsCount + "/" + progressGiftsCount + "/" + "<font color='#da5d88'>" + fakeGiftsCount + "</font>" + ")";
                 },
                 complete: function() {
@@ -1415,7 +1418,7 @@ function trackGiveawayUrls(source, urlsSource) {
 //////
 function isGiftValid(source) {
     // Use the search bar as the end point
-    var endPoint = source.indexOf("fa-search");
+    var endPoint = source.indexOf("sidebar__search-input");
 
     //
     // Requirements Checks
@@ -1423,56 +1426,56 @@ function isGiftValid(source) {
 
     // Looks like non-public gift
     if (hasStringBefore(source, "featured__outer-wrap--giveaway", endPoint) && !hasStringBefore(source, "featured__column--whitelist", endPoint) && !hasStringBefore(source, "featured__column--group", endPoint) && !hasStringBefore(source, "featured__column--invite-only", endPoint)) {
-        return false;
+        return -1;
     }
 
     // Error Entry Button check
     if (hasStringBefore(source, "sidebar__error", endPoint)) {
         // Exists in Account check
         if (hasStringBefore(source, "Exists in Account", endPoint)) {
-            return false;
+            return -2;
         }
 
         // Missing Base Game check
         if (hasStringBefore(source, "Missing Base Game", endPoint)) {
-            return false;
+            return -3;
         }
 
         // Contributor Level Required check
         if (hasStringBefore(source, "contributor-level--negative", endPoint)) {
-            return false;
+            return -4;
         }
 
         // Pass Not Enough Points
-        return true;
+        return 1;
     }
 
     // Ended check
     if (hasStringBefore(source, "Ended", endPoint)) {
-        return false;
+        return -5;
     }
 
     // Begins check
     if (hasStringBefore(source, "Begins", endPoint)) {
-        return false;
+        return -6;
     }
 
     // Already Entered check
     if (hasStringBefore(source, "sidebar__entry-insert is-hidden", endPoint)) {
-        return true;
+        return 2;
     }
 
     // Entry check (There is button to join)
     if (hasStringBefore(source, "entry_insert", endPoint)) {
-        return true;
+        return 3;
     }
 
     // Whitelist check
     if (hasStringBefore(source, "featured__column--whitelist", endPoint)) {
-        return false;
+        return -7;
     }
 
-    return false;
+    return -8;
 }
 
 //////
@@ -1656,14 +1659,13 @@ function getGiftEntries(source) {
 // UTIL: Returns gift remaining time from given source
 //////
 function getGiftTime(source) {
-    var endTime;
     var remainingTime;
 
     // Get end point of time data
     var timeEndPoint = source.indexOf("remaining");
 
     if (timeEndPoint == -1) {
-        return ["Uknown", "Unknown"];
+        return "Unknown";
     }
 
     // Get start point of time data
@@ -1672,29 +1674,22 @@ function getGiftTime(source) {
     // Cut substring with quotes characters
     var splitTimeString = source.substring(timeStartPoint, timeEndPoint).split("\"");
 
-    // Get end time result from split string
-    endTime = splitTimeString[4];
-
-    if (endTime == null) {
-        endTime = "Unknown"
-    }
-
-    // Get remaning time result
-    remainingTime = splitTimeString[5];
+    // Get remaining time result
+    remainingTime = splitTimeString[4];
 
     if (remainingTime == null) {
-        remainingTime = " Unknown"
+        remainingTime = " Unknown        "
     }
 
-    remainingTime = remainingTime.substring(1, remainingTime.length);
-    remainingTime += "remaining";
+    remainingTime = remainingTime.substring(1, remainingTime.length - 8);
+    remainingTime += " remaining";
 
     // Return result
-    return [endTime, remainingTime];
+    return remainingTime;
 }
 
 //////
-// UTIL: Convert remaning time to integer seconds
+// UTIL: Convert remaining time to integer seconds
 //////
 function convertRemainingToInt(stringTime) {
     var value = parseInt(stringTime.split(" ")[0]);
