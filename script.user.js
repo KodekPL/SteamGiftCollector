@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.16.3
+// @version     2.16.4
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -751,7 +751,7 @@ function displayGiftCard(url, source) {
     gameImgUrl.appendChild(gameImg);
 
     var avatarImg = document.createElement("img");
-    avatarImg.setAttribute("style", "width:3%; height:auto; position:absolute; margin:-48px 104px; border-radius: 10px;");
+    avatarImg.setAttribute("style", "width:2%; height:auto; position:absolute; margin:-46px 105px; border-radius: 10px;");
     avatarImg.src = giftAuthorAvatar;
 
     gameImageDiv.appendChild(gameImgUrl);
@@ -1031,7 +1031,7 @@ function displayGiftCard(url, source) {
 
     var giftTimeText = document.createElement("span");
     giftTimeText.setAttribute("style", "color:#6B7A8C;");
-    giftTimeText.innerHTML = " " + giftTime[1];
+    giftTimeText.innerHTML = " " + giftTime;
 
     var giftAuthorText = document.createElement("a");
     giftAuthorText.href = giftsTopicsTracker[url];
@@ -1674,8 +1674,10 @@ function getGiftTime(source) {
     // Cut substring with quotes characters
     var splitTimeString = source.substring(timeStartPoint, timeEndPoint).split("\"");
 
+    console.log(splitTimeString)
+
     // Get remaining time result
-    remainingTime = splitTimeString[4];
+    remainingTime = splitTimeString[5];
 
     if (remainingTime == null) {
         remainingTime = " Unknown        "
@@ -1703,7 +1705,7 @@ function convertRemainingToInt(stringTime) {
     } else if (stringTime.indexOf("minute") > -1) {
         return value * 60;
     } else {
-        return 0;
+        return value;
     }
 }
 
