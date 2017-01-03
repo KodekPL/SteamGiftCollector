@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.16.4
+// @version     2.16.5
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -1424,7 +1424,7 @@ function isGiftValid(source) {
     // Requirements Checks
     //
 
-    // Looks like non-public gift
+    // Looks like public gift
     if (hasStringBefore(source, "featured__outer-wrap--giveaway", endPoint) && !hasStringBefore(source, "featured__column--whitelist", endPoint) && !hasStringBefore(source, "featured__column--group", endPoint) && !hasStringBefore(source, "featured__column--invite-only", endPoint)) {
         return -1;
     }
@@ -1674,10 +1674,8 @@ function getGiftTime(source) {
     // Cut substring with quotes characters
     var splitTimeString = source.substring(timeStartPoint, timeEndPoint).split("\"");
 
-    console.log(splitTimeString)
-
     // Get remaining time result
-    remainingTime = splitTimeString[5];
+    remainingTime = splitTimeString[splitTimeString.length - 1];
 
     if (remainingTime == null) {
         remainingTime = " Unknown        "
