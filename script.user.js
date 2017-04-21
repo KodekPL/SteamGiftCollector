@@ -4,7 +4,7 @@
 // @author      Kodek
 // @namespace   csg
 // @include     *steamgifts.com/discussions*
-// @version     2.16.5
+// @version     2.17
 // @downloadURL https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @updateURL   https://github.com/KodekPL/SteamGiftCollector/raw/master/script.user.js
 // @run-at      document-end
@@ -16,6 +16,8 @@ var scanPagesCount = 4; // How many forum pages to scan?
 
 var isRunning = false; // Is script in progress?
 var isStopped = false; // Is script stopped?
+
+var bufferTime = 0 // Counter for time after finishing collecting
 
 var collectingStartTime = 0; // Holds start time of collecting
 
@@ -286,6 +288,7 @@ function startCollecting() {
 
     console.log("Collecting started (" + GM_info.script.version + ")...");
 
+    testForCollectingEnd();
     prepareGiftCardsContainer();
     asyncCollectTopics();
 }
@@ -293,7 +296,17 @@ function startCollecting() {
 //////
 // RUNTIME: End collecting process
 //////
-function endCollecting() {
+function endCollecting(force) {
+    if (!force) {
+        if (collectedGiftsCount < progressGiftsCount) {
+            return;
+        }
+
+        if (bufferTime < 10) {
+            return;
+        }
+    }
+
     updateCardsGamesDisplay();
 
     // Show collecting time
@@ -322,6 +335,23 @@ function endCollecting() {
     if (!isStopped) {
         playCompleteSound();
     }
+
+    isRunning = false;
+}
+
+//////
+// RUNTIME: Test for ending collecting
+//////
+function testForCollectingEnd() {
+    setTimeout(function() {
+        bufferTime += 1
+
+        if (isRunning) {
+            testForCollectingEnd()
+        }
+    }, 1000)
+
+    endCollecting(false);
 }
 
 //////
@@ -1259,12 +1289,13 @@ function updateDisplayCollection() {
 //////
 function stopCollection() {
     isStopped = true;
+    isRunning = false;
 
     for (var i = 0; i < ajaxRequests.length; i++) {
         ajaxRequests[i].abort();
     }
 
-    endCollecting();
+    endCollecting(true);
 }
 
 //////
@@ -1401,10 +1432,7 @@ function trackGiveawayUrls(source, urlsSource) {
                     }
 
                     collectedGiftsCount++;
-
-                    if (collectedGiftsCount >= progressGiftsCount) {
-                        endCollecting();
-                    }
+                    bufferTime = 0
                 }
             });
 
